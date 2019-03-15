@@ -42,7 +42,8 @@ def writeToFile(dataArray, header,outputFileDict):
             f = csv.writer(outputFile)
             file_header = ['category']
             headers= header[typeOfFile]
-            file_header.extend(headers) 
+            file_header.extend(headers)
+            checker= []
             if type(dataArray[0][typeOfFile])==list:
                 file_header.append('polarity')
             f.writerow(file_header)
@@ -50,24 +51,30 @@ def writeToFile(dataArray, header,outputFileDict):
                 dataReview = [data['category']]
                 try:
                     if type(data[typeOfFile])==list:
-                        
                         for review in data[typeOfFile]:
-                            for subheader in headers:
-                                dataReview.append(review[subheader])
-                            dataReview.append(getPolarity(float(review['Overall'])))
-                            if None not in dataReview:
-                                f.writerow(dataReview)
-                            dataReview = [data['category']]
+                            if review['ReviewID'] not in checker:
+                                for subheader in headers:
+                                    dataReview.append(review[subheader])
+                                if float(review['Overall']) != 3:
+                                    dataReview.append(getPolarity(float(review['Overall'])))
+                                if None not in dataReview:
+                                    f.writerow(dataReview)
+                                    checker.append(dataReview) 
+                                    checker.append(review['ReviewID'])
+                                dataReview = [data['category']]
+                                
                     else:
                         
                         for subheader in headers:
                             dataReview.append(data[typeOfFile][subheader])
                         if None not in dataReview:
                             f.writerow(dataReview)
-                        
+                
                 except Exception:
                    #pass
                     traceback.print_exc()
+           
+            print(len(checker))
 
 start = time.time()
 dataArray = readJsonData(rootdir)

@@ -43,7 +43,7 @@ def writeToFile(dataArray, header,outputFileDict):
             file_header = ['category']
             headers= header[typeOfFile]
             file_header.extend(headers) 
-            if dataArray[0][typeOfFile]==list:
+            if type(dataArray[0][typeOfFile])==list:
                 file_header.append('polarity')
             f.writerow(file_header)
             for data in dataArray[:500]:
@@ -55,7 +55,7 @@ def writeToFile(dataArray, header,outputFileDict):
                             for subheader in headers:
                                 dataReview.append(review[subheader])
                             dataReview.append(getPolarity(float(review['Overall'])))
-                            if "" not in dataReview:
+                            if None not in dataReview:
                                 f.writerow(dataReview)
                             dataReview = [data['category']]
                     else:

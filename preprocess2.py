@@ -16,39 +16,62 @@ lower - boolean
 stop - boolean
 stem - boolean
 '''
-def load_corpus(file, field,labelField, lower=True, stop=True, stem=True):
+def load_corpus(file, field,labelField, lower=True, stop=True, stem=True, sampleSize = None):
     # dir is a directory with plain text files to load.
     labels = []
     corpus = []
     
-
-    with open(file,encoding='utf-8') as csvfile:
-        reader = csv.DictReader(csvfile)
-        counter =1
-        for row in reader:
-            labels.append(row[labelField])
-            sent = nltk.word_tokenize(row[field])
+    '''
+    Reading the whole set of data from file
+    '''
+    if sampleSize == None:
             
-            if lower:
-                sent = [w.lower() for w in sent]
-            sent = [w for w in sent if re.search('^[a-z]+$', w)]
+        with open(file,encoding='utf-8') as csvfile:
+            reader = csv.DictReader(csvfile)
+            counter =1
+            for row in reader:
+                labels.append(row[labelField])
+                sent = nltk.word_tokenize(row[field])
+                
+                if lower:
+                    sent = [w.lower() for w in sent]
+                sent = [w for w in sent if re.search('^[a-z]+$', w)]
 
-            if stop:
-                sent = [w for w in sent if w not in stop_list]
-    
-            if stem:
-                sent = [stemmer.stem(w) for w in sent]
-    
-            corpus.append(sent)
-            if counter % 10000 ==0:
-                print(counter,sent)
-            counter= counter+1
+                if stop:
+                    sent = [w for w in sent if w not in stop_list]
+        
+                if stem:
+                    sent = [stemmer.stem(w) for w in sent]
+        
+                corpus.append(sent)
+                if counter % 10000 ==0:
+                    print(counter,sent)
+                counter= counter+1
 
-            '''
-            Enter value here to extract small subset
-            '''
-            if counter>100:
-                return labels, corpus
+    else: #Extract n number of data from the excel
+        with open(file,encoding='utf-8') as csvfile:
+            sampleData = []
+            reader = csv.DictReader(csvfile)
+            counter =1
+            for row in reader:
+                sampleData.append(row)
+            shuffle(sampleData) # Shuffle the data around
+            sampleData=sampleData[:sampleSize]
+            for row in sampleData:
+                labels.append(row[labelField])
+                sent = nltk.word_tokenize(row[field])
+                
+                if lower:
+                    sent = [w.lower() for w in sent]
+                sent = [w for w in sent if re.search('^[a-z]+$', w)]
+
+                if stop:
+                    sent = [w for w in sent if w not in stop_list]
+        
+                if stem:
+                    sent = [stemmer.stem(w) for w in sent]
+        
+                corpus.append(sent)
 
     return labels, corpus
 
@@ -60,9 +83,10 @@ def docs2vecs(docs, dictionary):
 
 
 startTime = time.time()
-label, docs= load_corpus("data/preprocessed_reviewinfo.csv", field='Content',labelField='category',lower=True,stop=True,stem=True)
+label, docs= load_corpus("data/preprocessed_reviewinfo.csv", field='Content',labelField='category',lower=True,stop=True,stem=True,sampleSize=500)
 print('Finished reading sentences from the training data file. Time: ', time.time()-startTime )
-
+print(len(docs))
+print(docs[5])
 all_tf_vectors = docs2vecs(docs, corpora.Dictionary(docs))
 #print(all_tf_vectors)
 print("finish converting to vector")

@@ -71,9 +71,10 @@ def writeToFile(dataArray, header,outputFileDict):
                                     try:
                                         dataReview.append(dictLabel[review['ReviewID']])
                                     except:
-                                        pass
+                                        continue
                                 if None not in dataReview:
-                                    f.writerow(dataReview)
+                                    if len(dataReview) == 8:
+                                        f.writerow(dataReview)
                                     checker.append(dataReview) 
                                     checker.append(review['ReviewID'])
                                 dataReview = [data['category']]

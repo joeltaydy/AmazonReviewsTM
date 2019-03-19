@@ -1,9 +1,18 @@
 import csv, json, os,time,traceback
 rootdir= 'AmazonReviews'
 outputFileDict = {
-    "outputFileProductInfo" : 'preprocessed_productinfo.csv',
-    "outputFileReviews" : 'preprocessed_reviewinfo.csv'
+    "outputFileProductInfo" : 'data/preprocessed_productinfo.csv',
+    "outputFileReviews" : 'data/preprocessed_reviewinfo.csv'
 }
+
+def readManualLabel(file):
+    dictLabel = {}
+    with open(file,encoding="utf-8",errors='ignore') as csvfile:
+        readCSV = csv.reader(csvfile)
+        next(readCSV, None)  # skip the headers
+        for row in readCSV:
+            dictLabel[row[3]] = row[7]
+    return dictLabel
 
 def readJsonData(rootdir):
     dataArray=[]
@@ -31,11 +40,12 @@ def getHeaders(dataArray):
 
 def getPolarity(overallScore):
     if overallScore <3 :
-        return "-"
+        return "0"
     else:
-        return "+"
+        return "1"
 
 def writeToFile(dataArray, header,outputFileDict):
+    dictLabel=readManualLabel('data/shit_hole.csv')
     for typeOfFile in header.keys():
         outputFile = "outputFile"+ typeOfFile
         with open(outputFileDict[outputFile],'w', newline='',encoding='utf-8') as outputFile:            
@@ -57,6 +67,11 @@ def writeToFile(dataArray, header,outputFileDict):
                                     dataReview.append(review[subheader])
                                 if float(review['Overall']) != 3:
                                     dataReview.append(getPolarity(float(review['Overall'])))
+                                else: 
+                                    try:
+                                        dataReview.append(dictLabel[review['ReviewID']])
+                                    except:
+                                        pass
                                 if None not in dataReview:
                                     f.writerow(dataReview)
                                     checker.append(dataReview) 
@@ -73,10 +88,10 @@ def writeToFile(dataArray, header,outputFileDict):
                 except Exception:
                    #pass
                     traceback.print_exc()
-           
-            print(len(checker))
+
 
 start = time.time()
+
 dataArray = readJsonData(rootdir)
 print("Finish reading the json data. Time Taken: " + str(time.time() - start))
 header = getHeaders(dataArray)

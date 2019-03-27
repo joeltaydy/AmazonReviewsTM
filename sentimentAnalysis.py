@@ -1,7 +1,7 @@
 import nltk, re, csv,time
 from gensim import corpora
 # The following list is to further remove some frequent words in SGNews.
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split,ShuffleSplit
 from sklearn.linear_model import LogisticRegression
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 import numpy as np
@@ -11,6 +11,8 @@ from sklearn.metrics import classification_report,confusion_matrix,accuracy_scor
 import pickle
 from textblob import TextBlob
 from sentimentAnalysisUtil import stemmed_words
+import pandas as pd
+
 
 startTime = time.time()
 stop_list = nltk.corpus.stopwords.words('english')
@@ -19,7 +21,10 @@ field='Content'
 labelField='polarity'
 docs=[]
 label=[]
-with open("data/preprocessed_reviewinfo.csv",encoding='utf-8') as csvfile:
+
+main_df = pd.read_csv("data/preprocessed_reviewinfo.csv")
+
+"""with open("data/preprocessed_reviewinfo.csv",encoding='utf-8') as csvfile:
             sampleData = []
             reader = csv.DictReader(csvfile)
             counter =1
@@ -28,7 +33,7 @@ with open("data/preprocessed_reviewinfo.csv",encoding='utf-8') as csvfile:
             for row in sampleData:
                 label.append(row[labelField])        
                 docs.append(row[field])
-
+"""
 #using textblob as a lexicon
 """
 for i in range(0,5):
@@ -39,20 +44,43 @@ print('Finished reading sentences from the training data file. Time: ', time.tim
 
 
 print("finish converting to vector")
-x_train, x_test, y_train, y_test = train_test_split(docs,label,test_size =0.3, random_state=50)
-
-
+#x_train, x_test, y_train, y_test = train_test_split(docs,label,test_size =0.3, random_state=50)
+df, validate_set = train_test_split(main_df, test_size=0.20, random_state=0)
 
 """k_fold = KFold(n=len(x_train), n_folds=3)  
 pipeline= Pipeline([('count',CountVectorizer(max_features=1000, lowercase=True, stop_words= 'english', ngram_range=(1,1),analyzer = stemmed_words)),
  ('tfidf', TfidfTransformer(use_idf=True, smooth_idf=True)), ('clf', LogisticRegression())
 ])
 """
+#Scores of average naive bayes classifier in cross validation
+scores = []
+count = 1
 
-count = CountVectorizer(max_features=1000, lowercase=True, stop_words= 'english', ngram_range=(1,2),analyzer = stemmed_words)
-temp = count.fit_transform(x_train)
-tfidf = TfidfTransformer(use_idf=True, smooth_idf=True)
-temp2 = tfidf.fit_transform(temp)
+#Instantiate cross validation folds
+ss = ShuffleSplit(n_splits=5, test_size=0.20, random_state=0)
+counter =1
+# cross validation,k = 5
+for train_index, test_index in ss.split(df):
+    train_df = df.iloc[train_index] #the 4 partitions
+    test_df = df.iloc[test_index] #the 1 partition to test
+    x_train, y_train = train_df['Content'].tolist(),train_df['polarity'].tolist()
+    x_test, y_test= test_df['Content'].tolist(),test_df['polarity'].tolist()
+    count = CountVectorizer(max_features=1000, lowercase=True, stop_words= 'english', ngram_range=(1,2),analyzer = stemmed_words)
+    temp = count.fit_transform(x_train)
+    tfidf = TfidfTransformer(use_idf=True, smooth_idf=True)
+    temp2 = tfidf.fit_transform(temp)
+
+    logRegression = LogisticRegression()
+    model = logRegression.fit(temp2,y_train)
+    filename = 'model_sentiment/logistic_regression_model.pk'
+    prediction = model.predict(tfidf.transform(count.transform(x_test)))
+
+    print("Iteration " + str(counter) + " Model accuracy : " + str(np.mean(prediction==y_test)))
+    counter=counter+1
+
+
+"""
+
 
 
 # un comment model for fitting
@@ -93,4 +121,4 @@ print("Time taken: " + str(time.time() - startTime))
 
 z_test = [input("What is your review? ")]
 prediction = model.predict(tfidf.transform(count.transform(z_test)))
-print("prediction is:" + prediction[0])
+print("prediction is:" + prediction[0])"""

@@ -12,6 +12,7 @@ import pickle
 from textblob import TextBlob
 from sentimentAnalysisUtil import stemmed_words
 import pandas as pd
+import statistics
 
 
 startTime = time.time()
@@ -42,8 +43,6 @@ for i in range(0,5):
 
 print('Finished reading sentences from the training data file. Time: ', time.time()-startTime )
 
-
-print("finish converting to vector")
 #x_train, x_test, y_train, y_test = train_test_split(docs,label,test_size =0.3, random_state=50)
 df, validate_set = train_test_split(main_df, test_size=0.20, random_state=0)
 
@@ -65,20 +64,45 @@ for train_index, test_index in ss.split(df):
     test_df = df.iloc[test_index] #the 1 partition to test
     x_train, y_train = train_df['Content'].tolist(),train_df['polarity'].tolist()
     x_test, y_test= test_df['Content'].tolist(),test_df['polarity'].tolist()
+
+    # Preparing documents into list according to categories
+    start = time.time()
     count = CountVectorizer(max_features=1000, lowercase=True, stop_words= 'english', ngram_range=(1,2),analyzer = stemmed_words)
     temp = count.fit_transform(x_train)
     tfidf = TfidfTransformer(use_idf=True, smooth_idf=True)
     temp2 = tfidf.fit_transform(temp)
 
+    
+    ### Logistic Regression
     logRegression = LogisticRegression()
     model = logRegression.fit(temp2,y_train)
     filename = 'model_sentiment/logistic_regression_model.pk'
+
+    '''
+    ## Naive bayes 
+    clf = MultinomialNB()
+    model= clf.fit(temp2,y_train)
+    filename = 'model_sentiment/nb_model.pk
+    '''
+
+    '''
+    ### Support Vector Machine
+    clf = svm.LinearSVC()
+    model= clf.fit(temp2,y_train)
+    filename = 'model_sentiment/svm_model.pk'
+    '''
     prediction = model.predict(tfidf.transform(count.transform(x_test)))
 
     print("Iteration " + str(counter) + " Model accuracy : " + str(np.mean(prediction==y_test)))
     counter=counter+1
+    #add to list of scores
+    scores.append(np.mean(prediction==y_test))
+    
+    end = time.time()
+    print("time taken: " + str((end - start)) + " secs")
 
-
+print("\nCross Validation Average Score: " + str(statistics.mean(scores)))
+print("Time taken: " + str(time.time() - startTime))
 """
 
 
@@ -117,7 +141,7 @@ pickle.dump(count, open('model_sentiment/count_vert.pk', 'wb'))
 print('\nClasification report:\n', classification_report(y_test, prediction))
 print('\nConfussion matrix:\n',confusion_matrix(y_test, prediction)  )
     
-print("Time taken: " + str(time.time() - startTime))
+
 
 z_test = [input("What is your review? ")]
 prediction = model.predict(tfidf.transform(count.transform(z_test)))

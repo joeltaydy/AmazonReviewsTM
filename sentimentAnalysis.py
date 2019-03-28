@@ -73,24 +73,23 @@ for train_index, test_index in ss.split(df):
     temp2 = tfidf.fit_transform(temp)
 
     
-    ### Logistic Regression
+    """### Logistic Regression
     logRegression = LogisticRegression()
     model = logRegression.fit(temp2,y_train)
-    filename = 'model_sentiment/logistic_regression_model.pk'
+    filename = 'model_sentiment/logistic_regression_model.pk'"""
 
-    '''
-    ## Naive bayes 
+    
+    """## Naive bayes 
     clf = MultinomialNB()
     model= clf.fit(temp2,y_train)
-    filename = 'model_sentiment/nb_model.pk
-    '''
-
-    '''
+    filename = 'model_sentiment/nb_model.pk'
+"""
+    
     ### Support Vector Machine
     clf = svm.LinearSVC()
     model= clf.fit(temp2,y_train)
     filename = 'model_sentiment/svm_model.pk'
-    '''
+    
     prediction = model.predict(tfidf.transform(count.transform(x_test)))
 
     print("Iteration " + str(counter) + " Model accuracy : " + str(np.mean(prediction==y_test)))

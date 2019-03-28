@@ -50,16 +50,16 @@ pipeline= Pipeline([('count',CountVectorizer(max_features=1000, lowercase=True, 
 """
 
 count = CountVectorizer(max_features=1000, lowercase=True, stop_words= 'english', ngram_range=(1,2),analyzer = stemmed_words)
-x_train_temp = count.fit_transform(x_train)
+temp = count.fit_transform(x_train)
 tfidf = TfidfTransformer(use_idf=True, smooth_idf=True)
-x_train_tfidf = tfidf.fit_transform(x_train_temp)
+temp2 = tfidf.fit_transform(temp)
 
 
 # un comment model for fitting
 
 ### Logistic Regression
 logRegression = LogisticRegression()
-model = logRegression.fit(x_train_tfidf,y_train)
+model = logRegression.fit(temp2,y_train)
 filename = 'model_sentiment/logistic_regression_model.pk'
 
 
@@ -83,14 +83,14 @@ print("Model accuracy : " + str(np.mean(prediction==y_test)))
 
 pickle.dump(model, open(filename, 'wb'))
 pickle.dump(tfidf, open('model_sentiment/tfidf_trans.pk', 'wb'))
-pickle.dump(count, open('model_sentiment/count_vect.pk', 'wb'))
+pickle.dump(count, open('model_sentiment/count_vert.pk', 'wb'))
 
 
 print('\nClasification report:\n', classification_report(y_test, prediction))
-print('\nConfusion matrix:\n',confusion_matrix(y_test, prediction)  )
+print('\nConfussion matrix:\n',confusion_matrix(y_test, prediction)  )
     
 print("Time taken: " + str(time.time() - startTime))
 
 z_test = [input("What is your review? ")]
 prediction = model.predict(tfidf.transform(count.transform(z_test)))
-print("Prediction:" + prediction[0])
+print("prediction is:" + prediction[0])

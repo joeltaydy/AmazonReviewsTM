@@ -1,6 +1,7 @@
 from sklearn.feature_extraction.text import CountVectorizer
 import nltk
 
+#stemmer
 def stemmed_words(doc):
     stemmer = nltk.stem.porter.PorterStemmer()
 

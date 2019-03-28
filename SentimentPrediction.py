@@ -20,4 +20,4 @@ model = pickle.load(open(filename, 'rb'))
 z_test = [input("What is your review? ")]
 prediction = model.predict(tfidf.transform(count.transform(z_test)))
 
-print("prediction is:" + "positive rating" if prediction[0] == "1" else "prediction is: negative rating",)
+print("Prediction:" + "Positive" if prediction[0] == "1" else "Prediction: Negative",)

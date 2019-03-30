@@ -7,8 +7,10 @@ import plotly.graph_objs as go
 import numpy as np
 from dash.dependencies import Output, State, Input
 import dash_table
+from datetime import datetime
 
-categories = ['Handphones', 'Laptops', 'Desktops']
+
+categories = ['all','cameras', 'laptops', 'mobile phone']
 tableView = pd.DataFrame(columns=['review', 'category', 'sentiment'])
 displaySentByCategoryX = []
 displaySentByCategoryY = []
@@ -88,32 +90,13 @@ app.layout = html.Div(style={'backgroundColor': colors['background']}, children=
 
      # drop down list to select which category do you want to look at
     dcc.Dropdown(
-        id='category dropdown',
+        id='category_dropdown',
         options=[{'label':category, 'value':category} for category in categories],
         value=categories[0]
     ),
 
     dcc.Graph(
         id='sentiment analysis time series analysis (Laptop)',
-        figure={
-            'data' : [
-                go.Scatter(
-                {'x': [1,2,3], 'y': [10, 8, 2], 'name': 'positive sentiment'}
-                ),
-                go.Scatter(
-                    {'x': [1,2,3], 'y': [3, 7, 12], 'name': 'negative sentiment'}
-                )
-            ],
-            'layout': {
-                'barmode': 'group',
-                'title': 'Time Series Sentiment Analysis(Laptop)',
-                'plot_bgcolor': colors['background'],
-                'paper_bgcolor': colors['background'],
-                'font': {
-                    'color': colors['text']
-                }
-            }
-        }
     )
     # dcc.Graph(
     #     id='example-graph-2',
@@ -133,6 +116,35 @@ app.layout = html.Div(style={'backgroundColor': colors['background']}, children=
     #     }
     # )
 ])
+# tableView = pd.DataFrame(columns=['review', 'category', 'sentiment'])
+@app.callback(Output('sentiment analysis time series analysis (Laptop)', 'figure'),
+            [Input('category_dropdown', 'value')],
+)
+
+def update_graph(selected_dropdown_value):
+    main_df = pd.read_csv("data/preprocessed_reviewinfo.csv", index_col=False)
+    main_df['new_Date'] = pd.to_datetime(main_df["Date"], format = '%B %d, %Y')
+    if selected_dropdown_value !="all":
+        main_df= main_df[main_df['category']== selected_dropdown_value]
+    positive_df = main_df.loc[main_df['polarity'] == 1].groupby(main_df.new_Date).agg('count')['Date'].reset_index()
+    negative_df = main_df.loc[main_df['polarity'] == 0].groupby(main_df.new_Date).agg('count')['Date'].reset_index()
+
+    return {
+        'data' : [
+                 {'x':positive_df['new_Date'], 'y': positive_df['Date'] ,'name':'positive sentiment'}
+                ,{'x':negative_df['new_Date'], 'y': negative_df['Date'] ,'name':'negative sentiment'}
+                
+            ],
+         'layout': {
+                'barmode': 'group',
+                'title': 'Time Series Sentiment Analysis (' +selected_dropdown_value+")",
+                'plot_bgcolor': colors['background'],
+                'paper_bgcolor': colors['background'],
+                'font': {
+                    'color': colors['text']
+                }
+        }
+    }
 
 # tableView = pd.DataFrame(columns=['review', 'category', 'sentiment'])
 @app.callback(Output('output_div', 'children'),
@@ -144,6 +156,8 @@ app.layout = html.Div(style={'backgroundColor': colors['background']}, children=
 
 def update_output(n_clicks, review):
     # tableView = pd.DataFrame(columns=['review', 'category', 'sentiment'])
+    if review == "Enter Review":
+        return
     # run review through sentiment
     sentiment = runModelSentiment(review)
     # # run review through category classification 
@@ -177,7 +191,24 @@ def update_output(n_clicks, review):
     return table
 
 def runModelSentiment(input_value):
-    if (input_value == 'test'):
+    from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
+    import pickle
+    from sklearn.naive_bayes import MultinomialNB
+    from sklearn.linear_model import LogisticRegression
+    from sklearn import svm
+    import numpy as np
+    from sentimentAnalysisUtil import stemmed_words,removeStopwords
+
+    #filename = 'model_sentiment/logistic_regression_model.pk'
+    #filename = 'model_sentiment/nb_model.pk
+    filename = 'model_sentiment/svm_model.pk'
+    tfidf = pickle.load(open('model_sentiment/tfidf_trans.pk','rb'))
+    count = pickle.load(open('model_sentiment/count_vert.pk','rb'))
+    # load the model from disk
+    model = pickle.load(open(filename, 'rb'))
+
+    prediction = model.predict(tfidf.transform(count.transform([input_value])))
+    if (prediction[0] == 0):
         return 'negative'
     return 'positive'
 

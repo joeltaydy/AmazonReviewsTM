@@ -91,28 +91,34 @@ app.layout = html.Div(style={'backgroundColor': colors['background']}, children=
         html.Div(id='output-data-upload')
     ]),
 
-    dcc.Graph(
-        id='sentiment analysis',
-        figure={ 
-            'data' : [
-                go.Bar(
-                {'x': categories, 'y': [20, 14, 23], 'name': 'positive sentiment'}
-                ),
-                go.Bar(
-                    {'x': categories, 'y': [-15, -7, -13], 'name': 'negative sentiment'}
-                )
-            ],
-            'layout': {
-                'barmode': 'group',
-                'title': 'Dash Data Visualization',
-                'plot_bgcolor': colors['background'],
-                'paper_bgcolor': colors['background'],
-                'font': {
-                    'color': colors['text']
-                }
-            }
-        }
-    ),
+    # dcc.Dropdown(
+    #     id='category_dropdown_bar',
+    #     options=[{'label':category, 'value':category} for category in categories],
+    #     value=categories[0]
+    # ),
+
+    # dcc.Graph(
+    #     id='sentiment analysis by category',
+        # figure={ 
+        #     'data' : [
+        #         go.Bar(
+        #         {'x': categories, 'y': [20, 14, 23, 40], 'name': 'positive sentiment'}
+        #         ),
+        #         go.Bar(
+        #             {'x': categories, 'y': [-15, -7, -13, -20], 'name': 'negative sentiment'}
+        #         )
+        #     ],
+        #     'layout': {
+        #         'barmode': 'group',
+        #         'title': 'Dash Data Visualization',
+        #         'plot_bgcolor': colors['background'],
+        #         'paper_bgcolor': colors['background'],
+        #         'font': {
+        #             'color': colors['text']
+        #         }
+        #     }
+        # }
+    # ),
 
      # drop down list to select which category do you want to look at
     dcc.Dropdown(
@@ -206,22 +212,22 @@ def update_output(n_clicks, review):
             'textAlign': 'left',
             'color': '#7FDBFF',
         },
-        # style_header={
-        #     'backgroundColor': '#111111',
-        #     'fontWeight': 'bold',
-        #     'color': '#7FDBFF',
-        #     'maxWidth': 0
-        # },
-        # style_cell_conditional=[
-        # {
-        #     'backgroundColor': '#111111',
-        #     'if': {'column_id': c},
-        #     'textAlign': 'left',
-        #     'color': '#7FDBFF',
-        #     'maxWidth': 0
-        # } for c in view.columns
+        style_header={
+            'backgroundColor': '#111111',
+            'fontWeight': 'bold',
+            'color': '#7FDBFF',
+            'maxWidth': 0
+        },
+        style_cell_conditional=[
+        {
+            'backgroundColor': '#111111',
+            'if': {'column_id': c},
+            'textAlign': 'left',
+            'color': '#7FDBFF',
+            'maxWidth': 0
+        } for c in view.columns
         
-    # ],
+    ]
     )
     return table
 
@@ -244,11 +250,31 @@ def parse_contents(contents, filename, date):
         return html.Div([
             'There was an error processing this file.'
         ])
-    
+    positive = {}
+    negative = {}
+    # intiate the categories count in both positive and negative dict
+    for category in categories:
+        positive[category] = 0
+        negative[category] = 0
+
     for row in df.iterrows():
         review = row[1]['Content']
-        print(runModelSentiment(review))
+        sentiment = runModelSentiment(review)
+        category = runModelCategoryClassification(review)
+        if sentiment == 'positive':
+            currentNumInCategory = positive[category]
+            positive[category] = currentNumInCategory + 1
+            # print('positive')
+        else:
+            currentNumInCategory = negative[category]
+            negative[category] = currentNumInCategory - 1
+            # print('negative')
+    
+    # dictToReturn = {}
+    # dictToReturn['positive'] = positive
+    # dictToReturn['negative'] = negative
 
+    return positive,negative
     # return html.Div([
     #     html.H5(filename),
     #     html.H6(datetime.datetime.fromtimestamp(date)),
@@ -274,12 +300,40 @@ def parse_contents(contents, filename, date):
 def update_upload(list_of_contents, list_of_names, list_of_dates):
     if list_of_contents is not None:
         children = [
-            parse_contents(c, n, d) for c, n, d in
-            zip(list_of_contents, list_of_names, list_of_dates)]
-        return children
+        parse_contents(c, n, d) for c, n, d in zip(list_of_contents, list_of_names, list_of_dates)]
+        # print(children)
+        return generateBarGraph(children[0][0],children[0][1])
 
+def generateBarGraph(positive,negative):
+    positive_values = [positive[category] for category in categories]
+    negative_values = [negative[category] for category in categories]
+    # print(positive)
+    # print('---------------------')
+    # print(negative)
+    # return 'nothing'
 
-
+    return dcc.Graph(
+            id='sentiment analysis by category',
+            figure = {
+                'data' : [
+                    go.Bar(
+                    {'x': categories[1:], 'y': positive_values[1:], 'name': 'positive sentiment'}
+                    ),
+                    go.Bar(
+                        {'x': categories[1:], 'y': negative_values[1:], 'name': 'negative sentiment'}
+                    )
+                ],
+                'layout': {
+                    'barmode': 'group',
+                    'title': 'Dash Data Visualization',
+                    'plot_bgcolor': colors['background'],
+                    'paper_bgcolor': colors['background'],
+                    'font': {
+                        'color': colors['text']
+                    }
+                }
+            }
+        )
 
 def runModelSentiment(input_value):
     from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
@@ -305,7 +359,7 @@ def runModelSentiment(input_value):
 
 
 def runModelCategoryClassification(input_value):
-    return 'test class'
+    return 'cameras'
 
 if __name__ == '__main__':
     app.run_server(debug=True)

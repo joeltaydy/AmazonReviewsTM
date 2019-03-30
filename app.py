@@ -235,7 +235,7 @@ def parse_contents(contents, filename, date):
             df = pd.read_csv(
                 io.StringIO(decoded.decode('utf-8')))
             print('df:')
-            print(df)
+            print(df.columns)
         elif 'xls' in filename:
             # Assume that the user uploaded an excel file
             df = pd.read_excel(io.BytesIO(decoded))
@@ -244,6 +244,10 @@ def parse_contents(contents, filename, date):
         return html.Div([
             'There was an error processing this file.'
         ])
+    
+    for row in df.iterrows():
+        review = row[1]['Content']
+        print(runModelSentiment(review))
 
     # return html.Div([
     #     html.H5(filename),

@@ -1,11 +1,10 @@
 from sklearn.feature_extraction.text import CountVectorizer,TfidfTransformer
-import nltk
+import nltk,re
 
 def stemmed_words(doc):
     stemmer = nltk.stem.porter.PorterStemmer()
 
     analyzer = CountVectorizer().build_analyzer()
-
     return (stemmer.stem(w) for w in analyzer(doc))
 
 def get_top_n_words(bow, vectorizer, n=10):
@@ -30,3 +29,19 @@ def get_top_n_words(bow, vectorizer, n=10):
     for word, freq in words_freq[:n]:
         print(word, freq) 
     return
+
+def removeStopwords(content):
+    
+    stop_words = nltk.corpus.stopwords.words('english')
+    stop_words += ['phone','laptop','mobile','camera','the']
+    toReturn = []
+    for sent in content:
+        stopped_review = ""
+        for word in sent.split(" "):
+
+            if word.lower() not in stop_words:
+                stopped_review +=  word.lower()+ " "
+        if stopped_review != "":
+            toReturn.append(stopped_review)
+    return toReturn
+    

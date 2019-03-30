@@ -7,6 +7,9 @@ import plotly.graph_objs as go
 import numpy as np
 from dash.dependencies import Output, State, Input
 import dash_table
+import base64
+import datetime
+import io
 
 categories = ['Handphones', 'Laptops', 'Desktops']
 tableView = pd.DataFrame(columns=['review', 'category', 'sentiment'])
@@ -62,6 +65,29 @@ app.layout = html.Div(style={'backgroundColor': colors['background']}, children=
     #     html.H4(children='Output'),
     #     generateTable(tableView)
     # ]),
+    html.Div([
+        dcc.Upload(
+            id='upload-data',
+            children=html.Div([
+                'Drag and Drop or ',
+                html.A('Select Files')
+            ]),
+            style={
+                'width': '100%',
+                'height': '60px',
+                'lineHeight': '60px',
+                'borderWidth': '1px',
+                'borderStyle': 'dashed',
+                'borderRadius': '5px',
+                'textAlign': 'center',
+                'margin': '10px',
+                'color': 'white'
+            },
+            # Allow multiple files to be uploaded
+            multiple=True
+        ),
+        html.Div(id='output-data-upload')
+    ]),
 
     dcc.Graph(
         id='sentiment analysis',
@@ -159,22 +185,83 @@ def update_output(n_clicks, review):
         data=view.to_dict('rows'),
         columns=[{'id': c, 'name': c} for c in view.columns],
         style_as_list_view=True,
-        style_cell={'padding': '5px'},
-        style_header={
+        # n_fixed_columns=3,
+        style_cell={
+            'padding': '5px',
             'backgroundColor': '#111111',
-            'fontWeight': 'bold',
-            'color': '#7FDBFF'
-        },
-        style_cell_conditional=[
-        {
-            'backgroundColor': '#111111',
-            'if': {'column_id': c},
             'textAlign': 'left',
-            'color': '#7FDBFF'
-        } for c in view.columns
-    ],
+            'color': '#7FDBFF',
+        },
+        # style_header={
+        #     'backgroundColor': '#111111',
+        #     'fontWeight': 'bold',
+        #     'color': '#7FDBFF',
+        #     'maxWidth': 0
+        # },
+        # style_cell_conditional=[
+        # {
+        #     'backgroundColor': '#111111',
+        #     'if': {'column_id': c},
+        #     'textAlign': 'left',
+        #     'color': '#7FDBFF',
+        #     'maxWidth': 0
+        # } for c in view.columns
+        
+    # ],
     )
     return table
+
+def parse_contents(contents, filename, date):
+    content_type, content_string = contents.split(',')
+
+    decoded = base64.b64decode(content_string)
+    try:
+        if 'csv' in filename:
+            # Assume that the user uploaded a CSV file
+            df = pd.read_csv(
+                io.StringIO(decoded.decode('utf-8')))
+            print('df:')
+            print(df)
+        elif 'xls' in filename:
+            # Assume that the user uploaded an excel file
+            df = pd.read_excel(io.BytesIO(decoded))
+    except Exception as e:
+        print(e)
+        return html.Div([
+            'There was an error processing this file.'
+        ])
+
+    # return html.Div([
+    #     html.H5(filename),
+    #     html.H6(datetime.datetime.fromtimestamp(date)),
+
+    #     dash_table.DataTable(
+    #         data=df.to_dict('rows'),
+    #         columns=[{'name': i, 'id': i} for i in df.columns]  
+    #     html.Hr(),  # horizontal line
+
+    #     # For debugging, display the raw contents provided by the web browser
+    #     html.Div('Raw Content'),
+    #     html.Pre(contents[0:200] + '...', style={
+    #         'whiteSpace': 'pre-wrap',
+    #         'wordBreak': 'break-all'
+    #     })
+    # ])
+
+
+@app.callback(Output('output-data-upload', 'children'),
+              [Input('upload-data', 'contents')],
+              [State('upload-data', 'filename'),
+               State('upload-data', 'last_modified')])
+def update_upload(list_of_contents, list_of_names, list_of_dates):
+    if list_of_contents is not None:
+        children = [
+            parse_contents(c, n, d) for c, n, d in
+            zip(list_of_contents, list_of_names, list_of_dates)]
+        return children
+
+
+
 
 def runModelSentiment(input_value):
     if (input_value == 'test'):

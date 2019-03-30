@@ -163,14 +163,14 @@ def update_output(n_clicks, review):
         style_header={
             'backgroundColor': '#111111',
             'fontWeight': 'bold',
-            'text': '#7FDBFF'
+            'color': '#7FDBFF'
         },
         style_cell_conditional=[
         {
             'backgroundColor': '#111111',
             'if': {'column_id': c},
             'textAlign': 'left',
-            'text': '#7FDBFF'
+            'color': '#7FDBFF'
         } for c in view.columns
     ],
     )

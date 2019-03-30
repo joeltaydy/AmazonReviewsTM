@@ -10,21 +10,24 @@ from sklearn import svm
 from sklearn.metrics import classification_report,confusion_matrix,accuracy_score
 import pickle
 from textblob import TextBlob
-from sentimentAnalysisUtil import stemmed_words
+from sentimentAnalysisUtil import stemmed_words,get_top_n_words,removeStopwords
 import pandas as pd
 import statistics
 
 
 startTime = time.time()
-stop_list = nltk.corpus.stopwords.words('english')
-
 field='Content'
 labelField='polarity'
 docs=[]
 label=[]
 
 main_df = pd.read_csv("data/preprocessed_reviewinfo.csv")
+positive_df = main_df[main_df.polarity == 1]
+negative_df = main_df[main_df.polarity ==0]
+difference = positive_df/negative_df
+main_df = pd.concat([negative_df, negative_df,negative_df,negative_df,positive_df])
 
+#print((main_df))
 """with open("data/preprocessed_reviewinfo.csv",encoding='utf-8') as csvfile:
             sampleData = []
             reader = csv.DictReader(csvfile)
@@ -54,7 +57,6 @@ pipeline= Pipeline([('count',CountVectorizer(max_features=1000, lowercase=True, 
 #Scores of average naive bayes classifier in cross validation
 scores = []
 count = 1
-
 #Instantiate cross validation folds
 ss = ShuffleSplit(n_splits=5, test_size=0.20, random_state=0)
 counter =1
@@ -62,12 +64,12 @@ counter =1
 for train_index, test_index in ss.split(df):
     train_df = df.iloc[train_index] #the 4 partitions
     test_df = df.iloc[test_index] #the 1 partition to test
-    x_train, y_train = train_df['Content'].tolist(),train_df['polarity'].tolist()
-    x_test, y_test= test_df['Content'].tolist(),test_df['polarity'].tolist()
+    x_train, y_train = removeStopwords(train_df['Content'].tolist()), train_df['polarity'].tolist()
+    x_test, y_test= removeStopwords(test_df['Content'].tolist()),test_df['polarity'].tolist()
 
     # Preparing documents into list according to categories
     start = time.time()
-    count = CountVectorizer(max_features=1000, lowercase=True, stop_words= 'english', ngram_range=(1,2),analyzer = stemmed_words)
+    count = CountVectorizer(max_features=5000, lowercase=True, ngram_range=(1,2),analyzer = stemmed_words)
     temp = count.fit_transform(x_train)
     tfidf = TfidfTransformer(use_idf=True, smooth_idf=True)
     temp2 = tfidf.fit_transform(temp)
@@ -96,23 +98,34 @@ for train_index, test_index in ss.split(df):
     counter=counter+1
     #add to list of scores
     scores.append(np.mean(prediction==y_test))
-    
+    #get_top_n_words(temp,count)
+    weights = np.asarray(temp2.mean(axis=0)).ravel().tolist()
+    weights_df = pd.DataFrame({'term': count.get_feature_names(), 'weight': weights})
+    print(weights_df.sort_values(by='weight', ascending=False).head(20))    
     end = time.time()
     print("time taken: " + str((end - start)) + " secs")
 
 print("\nCross Validation Average Score: " + str(statistics.mean(scores)))
 print("Time taken: " + str(time.time() - startTime))
-"""
 
+
+print("*"*10+ "Training final model" + "*"*10 )
+x_train, y_train = removeStopwords(df['Content'].tolist()), df['polarity'].tolist()
+x_test, y_test= removeStopwords(validate_set['Content'].tolist()),validate_set['polarity'].tolist()
+
+count = CountVectorizer(max_features=5000, lowercase=True, ngram_range=(1,2),analyzer = stemmed_words)
+temp = count.fit_transform(x_train)
+tfidf = TfidfTransformer(use_idf=True, smooth_idf=True)
+temp2 = tfidf.fit_transform(temp)
 
 
 # un comment model for fitting
-
+'''
 ### Logistic Regression
 logRegression = LogisticRegression()
 model = logRegression.fit(temp2,y_train)
 filename = 'model_sentiment/logistic_regression_model.pk'
-
+'''
 
 '''
 ## Naive bayes 
@@ -121,17 +134,18 @@ model= clf.fit(temp2,y_train)
 filename = 'model_sentiment/nb_model.pk
 '''
 
-'''
+
 ### Support Vector Machine
 clf = svm.LinearSVC()
 model= clf.fit(temp2,y_train)
 filename = 'model_sentiment/svm_model.pk'
-'''
+
 
 prediction = model.predict(tfidf.transform(count.transform(x_test)))
 
 print("Model accuracy : " + str(np.mean(prediction==y_test)))
 
+print("*"*10+ "Saving final model" + "*"*10 )
 pickle.dump(model, open(filename, 'wb'))
 pickle.dump(tfidf, open('model_sentiment/tfidf_trans.pk', 'wb'))
 pickle.dump(count, open('model_sentiment/count_vert.pk', 'wb'))
@@ -140,8 +154,9 @@ pickle.dump(count, open('model_sentiment/count_vert.pk', 'wb'))
 print('\nClasification report:\n', classification_report(y_test, prediction))
 print('\nConfussion matrix:\n',confusion_matrix(y_test, prediction)  )
     
+print("time taken: " + str((time.time() - startTime)) + " secs")
 
 
 z_test = [input("What is your review? ")]
 prediction = model.predict(tfidf.transform(count.transform(z_test)))
-print("prediction is:" + prediction[0])"""
+print("prediction is:" + str(prediction[0]))

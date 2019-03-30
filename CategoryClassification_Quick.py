@@ -18,13 +18,10 @@ classifier_saved = open("model_classification/CategoryClassifier.pickle", "rb")
 classifier = pickle.load(classifier_saved)
 classifier_saved.close()
 
-# Splitting the dataset into train and validate
-df, validate_set = train_test_split(main_df, test_size=0.20, random_state=0)
-
-# Create the dictionary in TFIDF
-# There are too many unique words. Set max features to 5000
-TFIDF_vect = TfidfVectorizer(max_features=5000)
-TFIDF_vect.fit(main_df['processed_content'])
+#Load the saved classifier 
+classifier_saved = open("model_classification/TFIDF_Reviews_Category.pickle", "rb") #binary read
+TFIDF_vect = pickle.load(classifier_saved)
+classifier_saved.close()
 
 #input
 z_test = [input("What is your review? ")]

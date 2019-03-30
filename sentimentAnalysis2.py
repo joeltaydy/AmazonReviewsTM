@@ -15,6 +15,5 @@ count = pickle.load(open('model_sentiment/count_vert.pk','rb'))
 model = pickle.load(open(filename, 'rb'))
 
 z_test = [input("What is your review? ")]
-prediction = model.predict(tfidf.transform(count.transform(removeStopwords(z_test))))
-
-print("prediction is:" + "positive rating" if prediction[0] == "1" else "prediction is: negative rating",)
+prediction = model.predict(tfidf.transform(count.transform(z_test)))
+print("prediction is:" + "positive rating" if prediction[0] == 1 else "prediction is: negative rating",)

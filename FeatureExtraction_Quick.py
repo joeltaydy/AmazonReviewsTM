@@ -33,4 +33,34 @@ classifier_saved.close()
 
 #input
 n = [input("Please input the top n features")]
-print(classifier.show_most_informative_features(n))
+# Extract the key features and put into dataframe
+
+list_1 = classifier.most_informative_features(int(n))
+df_important_features = pd.DataFrame(columns=['Feature','Category_1',
+                                              'Category_0','Cat1_Cat0','Ratio','Ratio_1'])
+
+for (fname, fval) in list_1:
+    cpdist = classifier._feature_probdist
+    
+    def labelprob(l):
+        return cpdist[l, fname].prob(fval)
+
+    labels = sorted(
+        [l for l in classifier._labels if fval in cpdist[l, fname].samples()],
+        key=labelprob
+    )
+    
+    if len(labels) == 1:
+        continue
+    l0 = labels[0]
+    l1 = labels[-1]
+    if cpdist[l0, fname].prob(fval) == 0:
+        ratio = 'INF'
+    else:
+        ratio = round(cpdist[l1, fname].prob(fval) / cpdist[l0, fname].prob(fval), 1)
+        fname = fname.replace('contains(','')
+        fname = fname.replace(')','')        
+        df_important_features.loc[len(df_important_features)] = [fname, l1, l0, l1+" : "+l0, 
+                                                ratio, str(ratio)+" : 1.0"]
+ 
+return df_important_features

@@ -11,6 +11,8 @@ import base64
 import datetime
 import io
 from datetime import datetime
+from sentimentAnalysisUtil import stemmed_words,removeStopwords
+from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 
 
 categories = ['all','cameras', 'laptops', 'mobile phone']
@@ -256,7 +258,10 @@ def parse_contents(contents, filename, date):
     for category in categories:
         positive[category] = 0
         negative[category] = 0
-
+    
+    positiveReviews=[]
+    negativeReviews=[]
+    
     for row in df.iterrows():
         review = row[1]['Content']
         sentiment = runModelSentiment(review)
@@ -264,12 +269,47 @@ def parse_contents(contents, filename, date):
         if sentiment == 'positive':
             currentNumInCategory = positive[category]
             positive[category] = currentNumInCategory + 1
+            positiveReviews.append(review)
             # print('positive')
         else:
             currentNumInCategory = negative[category]
             negative[category] = currentNumInCategory - 1
+            negativeReviews.append(review)
             # print('negative')
+
+    #Analysing features of positive and negative reviews
     
+    positiveReviews = removeStopwords(positiveReviews)
+    negativeReviews = removeStopwords(negativeReviews)
+
+    #for positive reviews
+    count_vect_pos = CountVectorizer(max_features=5000, lowercase=True, ngram_range=(1,2))
+    vectorizer_matrix_pos = count_vect_pos.fit_transform(positiveReviews)
+    tfidf_transformer_pos = TfidfTransformer(use_idf=True, smooth_idf=True)
+    tfidf_pos = tfidf_transformer_pos.fit_transform(vectorizer_matrix_pos)
+    # df = pd.DataFrame(tfidf.toarray(), columns = count_vect.get_feature_names())
+    # print(df)
+    weights_pos = np.asarray(tfidf_pos.mean(axis=0)).ravel().tolist()
+    weights_df_pos = pd.DataFrame({'term': count_vect_pos.get_feature_names(), 'weight': weights_pos})
+    positive_features_df =(weights_df_pos.sort_values(by='weight', ascending=False).head(20))    
+
+    #for negative reviews
+    count_vect_neg = CountVectorizer(max_features=5000, lowercase=True, ngram_range=(1,2))
+    vectorizer_matrix_neg = count_vect_neg.fit_transform(negativeReviews)
+    tfidf_transformer_neg = TfidfTransformer(use_idf=True, smooth_idf=True)
+    tfidf_neg = tfidf_transformer_neg.fit_transform(vectorizer_matrix_neg)
+    # df = pd.DataFrame(tfidf.toarray(), columns = count_vect.get_feature_names())
+    # print(df)
+    weights_neg = np.asarray(tfidf_neg.mean(axis=0)).ravel().tolist()
+    weights_df_neg = pd.DataFrame({'term': count_vect_neg.get_feature_names(), 'weight': weights_neg})
+    negative_features_df =(weights_df_neg.sort_values(by='weight', ascending=False).head(20))    
+
+    # print("Positive Features:")
+    # print(positive_features_df)
+
+    # print("Negative Features:")
+    # print(negative_features_df)
+
     # dictToReturn = {}
     # dictToReturn['positive'] = positive
     # dictToReturn['negative'] = negative

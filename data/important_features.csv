@@ -1,0 +1,21 @@
+Feature,Category_1,Category_0,Cat1_Cat0,Ratio,Ratio_1
+lens,cameras,laptops,cameras : laptops,1115.1,1115.1 : 1.0
+keyboard,laptops,cameras,laptops : cameras,670.4,670.4 : 1.0
+chromebook,laptops,mobile phone,laptops : mobile phone,341.9,341.9 : 1.0
+canon,cameras,mobile phone,cameras : mobile phone,280.4,280.4 : 1.0
+telephoto,cameras,mobile phone,cameras : mobile phone,251.7,251.7 : 1.0
+sim,mobile phone,cameras,mobile phone : cameras,245.3,245.3 : 1.0
+mouse,laptops,cameras,laptops : cameras,224.3,224.3 : 1.0
+contract,mobile phone,cameras,mobile phone : cameras,198.5,198.5 : 1.0
+nikon,cameras,mobile phone,cameras : mobile phone,180.2,180.2 : 1.0
+prepaid,mobile phone,cameras,mobile phone : cameras,170.5,170.5 : 1.0
+apps,mobile phone,cameras,mobile phone : cameras,148.7,148.7 : 1.0
+waterproof,cameras,laptops,cameras : laptops,143.7,143.7 : 1.0
+galaxy,mobile phone,cameras,mobile phone : cameras,143.0,143.0 : 1.0
+laptops,laptops,cameras,laptops : cameras,130.0,130.0 : 1.0
+iso,cameras,mobile phone,cameras : mobile phone,127.7,127.7 : 1.0
+rebel,cameras,mobile phone,cameras : mobile phone,126.1,126.1 : 1.0
+shots,cameras,laptops,cameras : laptops,125.1,125.1 : 1.0
+autofocus,cameras,laptops,cameras : laptops,119.8,119.8 : 1.0
+shoot,cameras,laptops,cameras : laptops,116.4,116.4 : 1.0
+dslr,cameras,mobile phone,cameras : mobile phone,106.2,106.2 : 1.0

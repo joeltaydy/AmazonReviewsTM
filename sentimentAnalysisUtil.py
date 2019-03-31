@@ -33,7 +33,7 @@ def get_top_n_words(bow, vectorizer, n=10):
 def removeStopwords(content):
     
     stop_words = nltk.corpus.stopwords.words('english')
-    stop_words += ['phone','laptop','mobile','camera','the']
+    stop_words += ['phone','laptop','mobile','camera','the','phones','cameras']
     toReturn = []
     for sent in content:
         stopped_review = ""

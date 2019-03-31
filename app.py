@@ -211,20 +211,20 @@ def update_output(n_clicks, review):
             'backgroundColor': '#111111',
             'textAlign': 'left',
             'color': '#7FDBFF',
+            'maxWidth': '180px'
         },
         style_header={
             'backgroundColor': '#111111',
             'fontWeight': 'bold',
             'color': '#7FDBFF',
-            'maxWidth': 0
+            'maxWidth': '180px'
         },
         style_cell_conditional=[
         {
             'backgroundColor': '#111111',
             'if': {'column_id': c},
             'textAlign': 'left',
-            'color': '#7FDBFF',
-            'maxWidth': 0
+            'color': '#7FDBFF'
         } for c in view.columns
         
     ]
@@ -325,7 +325,7 @@ def generateBarGraph(positive,negative):
                 ],
                 'layout': {
                     'barmode': 'group',
-                    'title': 'Dash Data Visualization',
+                    'title': 'Sentiment Distribution by Category',
                     'plot_bgcolor': colors['background'],
                     'paper_bgcolor': colors['background'],
                     'font': {
@@ -353,6 +353,8 @@ def runModelSentiment(input_value):
     model = pickle.load(open(filename, 'rb'))
 
     prediction = model.predict(tfidf.transform(count.transform([input_value])))
+
+    print('predicting sentiment')
     if (prediction[0] == 0):
         return 'negative'
     return 'positive'
@@ -388,15 +390,16 @@ def runModelCategoryClassification(input_value):
     review_holder_1 = pd.Series(review_holder)
 
     # Transform reviews into TFIDF
-    review_TFIDF = TFIDF_vect.transform(review_holder_1)
-    prediction = classifier.predict(test_TDIDF)
+    test_TFIDF = TFIDF_vect.transform(review_holder_1)
+    prediction = classifier.predict(test_TFIDF)
 
+    print('predicting category')
     if prediction[0] == 0:
-        return "Camera"
+        return "cameras"
     elif prediction[0] == 1:
-        return "Laptop"
-    else
-        return "Mobile Phone"
+        return "laptops"
+    else:
+        return "mobile phone"
 
 
 

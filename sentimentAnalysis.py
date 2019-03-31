@@ -44,8 +44,8 @@ print('Finished reading sentences from the training data file. Time: ', time.tim
 
 #x_train, x_test, y_train, y_test = train_test_split(docs,label,test_size =0.3, random_state=50)
 df, validate_set = train_test_split(main_df, test_size=0.20, random_state=0)
-positive_df = df[main_df.polarity == 1]
-negative_df = df[main_df.polarity ==0]
+positive_df = df[df.polarity == 1]
+negative_df = df[df.polarity ==0]
 difference = positive_df/negative_df
 df = pd.concat([negative_df, negative_df,negative_df,negative_df,positive_df])
 

@@ -395,7 +395,7 @@ def runModelCategoryClassification(input_value):
         return "Camera"
     elif prediction[0] == 1:
         return "Laptop"
-    else
+    else:
         return "Mobile Phone"
 
 

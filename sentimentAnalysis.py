@@ -22,10 +22,6 @@ docs=[]
 label=[]
 
 main_df = pd.read_csv("data/preprocessed_reviewinfo.csv")
-positive_df = main_df[main_df.polarity == 1]
-negative_df = main_df[main_df.polarity ==0]
-difference = positive_df/negative_df
-main_df = pd.concat([negative_df, negative_df,negative_df,negative_df,positive_df])
 
 #print((main_df))
 """with open("data/preprocessed_reviewinfo.csv",encoding='utf-8') as csvfile:
@@ -48,6 +44,10 @@ print('Finished reading sentences from the training data file. Time: ', time.tim
 
 #x_train, x_test, y_train, y_test = train_test_split(docs,label,test_size =0.3, random_state=50)
 df, validate_set = train_test_split(main_df, test_size=0.20, random_state=0)
+positive_df = df[main_df.polarity == 1]
+negative_df = df[main_df.polarity ==0]
+difference = positive_df/negative_df
+df = pd.concat([negative_df, negative_df,negative_df,negative_df,positive_df])
 
 """k_fold = KFold(n=len(x_train), n_folds=3)  
 pipeline= Pipeline([('count',CountVectorizer(max_features=1000, lowercase=True, stop_words= 'english', ngram_range=(1,1),analyzer = stemmed_words)),

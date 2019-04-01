@@ -302,6 +302,19 @@ def parse_contents(contents, filename, date):
             negativeReviews.append(review)
             # print('negative')
 
+    numSampleReviews = 5
+    positiveReviewsToBeDisplayed = pd.DataFrame(columns=['Review'])
+    negativeReviewsToBeDisplayed = pd.DataFrame(columns=['Review'])
+
+    # displaying entered number of Sample Reviews for both positive and negative sentiments
+    for review in positiveReviews[0:numSampleReviews]:
+        row = pd.Series([review], index=positiveReviewsToBeDisplayed.columns)
+        positiveReviewsToBeDisplayed = positiveReviewsToBeDisplayed.append(row,ignore_index = True)
+    
+    for review in negativeReviews[0:numSampleReviews]:
+        row = pd.Series([review], index=negativeReviewsToBeDisplayed.columns)
+        negativeReviewsToBeDisplayed = negativeReviewsToBeDisplayed.append(row,ignore_index = True)
+
     #Analysing features of positive and negative reviews
     
     positiveReviews = removeStopwords(positiveReviews)
@@ -320,8 +333,8 @@ def parse_contents(contents, filename, date):
         weights_pos = np.asarray(tfidf_pos.mean(axis=0)).ravel().tolist()
         weights_df_pos = pd.DataFrame({'term': count_vect_pos.get_feature_names(), 'weight': weights_pos})
         positive_features_df =(weights_df_pos.sort_values(by='weight', ascending=False).head(20))
-    print('positive: ')
-    print(positive_features_df)    
+    # print('positive: ')
+    # print(positive_features_df)    
 
     if len(negativeReviews) > 0:
         #for negative reviews
@@ -334,8 +347,8 @@ def parse_contents(contents, filename, date):
         weights_neg = np.asarray(tfidf_neg.mean(axis=0)).ravel().tolist()
         weights_df_neg = pd.DataFrame({'term': count_vect_neg.get_feature_names(), 'weight': weights_neg})
         negative_features_df =(weights_df_neg.sort_values(by='weight', ascending=False).head(20))    
-    print('negative: ')
-    print(negative_features_df)
+    # print('negative: ')
+    # print(negative_features_df)
 
     # print("Positive Features:")
     # print(positive_features_df)
@@ -347,7 +360,7 @@ def parse_contents(contents, filename, date):
     # dictToReturn['positive'] = positive
     # dictToReturn['negative'] = negative
 
-    return positive,negative,positive_features_df,negative_features_df
+    return positive,negative,positive_features_df,negative_features_df,positiveReviewsToBeDisplayed,negativeReviewsToBeDisplayed
     # return html.Div([
     #     html.H5(filename),
     #     html.H6(datetime.datetime.fromtimestamp(date)),
@@ -375,9 +388,9 @@ def update_upload(list_of_contents, list_of_names, list_of_dates):
         children = [
         parse_contents(c, n, d) for c, n, d in zip(list_of_contents, list_of_names, list_of_dates)]
         # print(children)
-        return generateDisplay(children[0][0],children[0][1], children[0][2], children[0][3])
+        return generateDisplay(children[0][0],children[0][1], children[0][2], children[0][3],children[0][4],children[0][5])
 
-def generateDisplay(positive,negative,positive_features_df,negative_features_df):
+def generateDisplay(positive,negative,positive_features_df,negative_features_df,positiveReviewsToBeDisplayed,negativeReviewsToBeDisplayed):
     positive_values = [positive[category] for category in categories]
     negative_values = [negative[category] for category in categories]
     # print(positive)
@@ -408,6 +421,85 @@ def generateDisplay(positive,negative,positive_features_df,negative_features_df)
                     }
                 }
             ),
+            html.Div([
+                html.H2(
+                    children='Sample Positive Reviews',
+                    style={
+                        'textAlign': 'center',
+                        'color': colors['text']
+                }),
+
+                dash_table.DataTable(
+                    data=positiveReviewsToBeDisplayed.to_dict('rows'),
+                    columns=[{'id': c, 'name': c} for c in positiveReviewsToBeDisplayed.columns],
+                    style_as_list_view=True,
+                    # n_fixed_columns=3,
+                    style_cell={
+                        'padding': '5px',
+                        'backgroundColor': '#111111',
+                        'textAlign': 'left',
+                        'color': '#7FDBFF',
+                        'textOverflow': 'ellipsis'
+                    },
+                    style_header={
+                        'backgroundColor': '#111111',
+                        'fontWeight': 'bold',
+                        'color': '#7FDBFF',
+                        'maxWidth': '180px'
+                    },
+                    style_table={
+                        'maxHeight': '500',
+                        'overflowY': 'scroll'
+                    }
+                    # style_cell_conditional=[
+                    # {
+                    #     'backgroundColor': '#111111',
+                    #     'if': {'column_id': c},
+                    #     'textAlign': 'left',
+                    #     'color': '#7FDBFF'
+                    # } for c in positive_features_df.columns
+                    # ]
+                )
+            ]), 
+             html.Div([
+                html.H2(
+                    children='Sample Negative Reviews',
+                    style={
+                        'textAlign': 'center',
+                        'color': colors['text']
+                }),
+                dash_table.DataTable(
+                    data=negativeReviewsToBeDisplayed.to_dict('rows'),
+                    columns=[{'id': c, 'name': c} for c in negativeReviewsToBeDisplayed.columns],
+                    style_as_list_view=True,
+                    # n_fixed_columns=3,
+                    style_cell={
+                        'padding': '5px',
+                        'backgroundColor': '#111111',
+                        'textAlign': 'left',
+                        'color': '#7FDBFF',
+                        'textOverflow': 'ellipsis'
+                    },
+                    style_header={
+                        'backgroundColor': '#111111',
+                        'fontWeight': 'bold',
+                        'color': '#7FDBFF',
+                        'maxWidth': '180px'
+                    },
+                    style_table={
+                        'maxHeight': '500',
+                        'overflowY': 'scroll'
+                    }
+                    # style_cell_conditional=[
+                    # {
+                    #     'backgroundColor': '#111111',
+                    #     'if': {'column_id': c},
+                    #     'textAlign': 'left',
+                    #     'color': '#7FDBFF'
+                    # } for c in positive_features_df.columns
+                    # ]
+                )
+            ]),
             # data table for positive features
             html.Div([
                 html.H2(

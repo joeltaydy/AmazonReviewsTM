@@ -10,7 +10,7 @@ from sklearn import svm
 from sklearn.metrics import classification_report,confusion_matrix,accuracy_score
 import pickle
 from textblob import TextBlob
-from sentimentAnalysisUtil import stemmed_words,get_top_n_words,removeStopwords
+from sentimentAnalysisUtil import stemmed_words,get_top_n_words,removeStopwords,preprocess_punc_stop
 import pandas as pd
 import statistics
 
@@ -66,7 +66,12 @@ for train_index, test_index in ss.split(df):
     test_df = df.iloc[test_index] #the 1 partition to test
     x_train, y_train = removeStopwords(train_df['Content'].tolist()), train_df['polarity'].tolist()
     x_test, y_test= removeStopwords(test_df['Content'].tolist()),test_df['polarity'].tolist()
+    # x_train, y_train = preprocess_punc_stop(train_df['Content'].tolist()), train_df['polarity'].tolist()
+    # x_test, y_test= preprocess_punc_stop(test_df['Content'].tolist()),test_df['polarity'].tolist()
 
+    # print(x_train)
+    # exit() 
+    print("Converting to tfidf")
     # Preparing documents into list according to categories
     start = time.time()
     count = CountVectorizer(max_features=5000, lowercase=True, ngram_range=(1,2),analyzer = stemmed_words)
@@ -110,8 +115,10 @@ print("Time taken: " + str(time.time() - startTime))
 
 
 print("*"*10+ "Training final model" + "*"*10 )
-x_train, y_train = removeStopwords(df['Content'].tolist()), df['polarity'].tolist()
-x_test, y_test= removeStopwords(validate_set['Content'].tolist()),validate_set['polarity'].tolist()
+# x_train, y_train = removeStopwords(df['Content'].tolist()), df['polarity'].tolist()
+# x_test, y_test= removeStopwords(validate_set['Content'].tolist()),validate_set['polarity'].tolist()
+x_train, y_train = preprocess_punc_stop(df['Content'].tolist()), df['polarity'].tolist()
+x_test, y_test= preprocess_punc_stop(validate_set['Content'].tolist()),validate_set['polarity'].tolist()
 
 count = CountVectorizer(max_features=5000, lowercase=True, ngram_range=(1,2),analyzer = stemmed_words)
 temp = count.fit_transform(x_train)
@@ -146,9 +153,9 @@ prediction = model.predict(tfidf.transform(count.transform(x_test)))
 print("Model accuracy : " + str(np.mean(prediction==y_test)))
 
 print("*"*10+ "Saving final model" + "*"*10 )
-pickle.dump(model, open(filename, 'wb'))
-pickle.dump(tfidf, open('model_sentiment/tfidf_trans.pk', 'wb'))
-pickle.dump(count, open('model_sentiment/count_vert.pk', 'wb'))
+# pickle.dump(model, open(filename, 'wb'))
+# pickle.dump(tfidf, open('model_sentiment/tfidf_trans.pk', 'wb'))
+# pickle.dump(count, open('model_sentiment/count_vert.pk', 'wb'))
 
 
 print('\nClasification report:\n', classification_report(y_test, prediction))

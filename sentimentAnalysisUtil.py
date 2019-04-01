@@ -1,5 +1,5 @@
 from sklearn.feature_extraction.text import CountVectorizer,TfidfTransformer
-import nltk,re
+import nltk,re,string
 
 def stemmed_words(doc):
     stemmer = nltk.stem.porter.PorterStemmer()
@@ -33,15 +33,50 @@ def get_top_n_words(bow, vectorizer, n=10):
 def removeStopwords(content):
     
     stop_words = nltk.corpus.stopwords.words('english')
-    stop_words += ['phone','laptop','mobile','camera','the','phones','cameras']
+    stop_words += ['phone','laptop','mobile','camera','the','phones','cameras', 'laptops']
     toReturn = []
     for sent in content:
         stopped_review = ""
         for word in sent.split(" "):
 
             if word.lower() not in stop_words:
-                stopped_review +=  word.lower()+ " "
+                stopped_review +=  word+ " "
         if stopped_review != "":
             toReturn.append(stopped_review)
+    return toReturn
+
+def preprocess_punc_stop(content):
+    
+    stop_words = nltk.corpus.stopwords.words('english')
+    stop_words += ['phone','laptop','mobile','camera','the','phones','cameras', 'laptops']
+
+    # sent = [w for w in sent if re.search('^[a-z]+$', w)]
+
+    removePunc = []
+    remove = string.punctuation
+    pattern = r"[{}]".format(remove) 
+    for sent in content:
+        # print ("Original:" + sent)
+        nopunc_review = ""
+        for word in sent.split():
+            # print("Before:" + word)
+            word = re.sub(pattern,"",word)
+            # print("After:" + word)
+        #     if re.search('^[a-zA-Z]+$',word):
+            nopunc_review +=  word+ " "
+        if nopunc_review != "":
+            removePunc.append(nopunc_review)
+            # print("After: "+nopunc_review)
+
+    toReturn = []
+    for sent in removePunc:
+        stopped_review = ""
+        for word in sent.split():
+
+            if word.lower() not in stop_words:
+                stopped_review +=  word+ " "
+        if stopped_review != "":
+            toReturn.append(stopped_review)
+
     return toReturn
     

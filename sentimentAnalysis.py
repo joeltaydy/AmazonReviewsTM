@@ -54,6 +54,7 @@ pipeline= Pipeline([('count',CountVectorizer(max_features=1000, lowercase=True, 
  ('tfidf', TfidfTransformer(use_idf=True, smooth_idf=True)), ('clf', LogisticRegression())
 ])
 """
+"""
 #Scores of average naive bayes classifier in cross validation
 scores = []
 count = 1
@@ -80,16 +81,16 @@ for train_index, test_index in ss.split(df):
     temp2 = tfidf.fit_transform(temp)
 
     
-    """### Logistic Regression
-    logRegression = LogisticRegression()
-    model = logRegression.fit(temp2,y_train)
-    filename = 'model_sentiment/logistic_regression_model.pk'"""
+    # """### Logistic Regression
+    # logRegression = LogisticRegression()
+    # model = logRegression.fit(temp2,y_train)
+    # filename = 'model_sentiment/logistic_regression_model.pk'"""
 
     
-    """## Naive bayes 
-    clf = MultinomialNB()
-    model= clf.fit(temp2,y_train)
-    filename = 'model_sentiment/nb_model.pk'
+    # """## Naive bayes 
+    # clf = MultinomialNB()
+    # model= clf.fit(temp2,y_train)
+    # filename = 'model_sentiment/nb_model.pk'
 """
     
     ### Support Vector Machine
@@ -112,13 +113,13 @@ for train_index, test_index in ss.split(df):
 
 print("\nCross Validation Average Score: " + str(statistics.mean(scores)))
 print("Time taken: " + str(time.time() - startTime))
-
+"""
 
 print("*"*10+ "Training final model" + "*"*10 )
-# x_train, y_train = removeStopwords(df['Content'].tolist()), df['polarity'].tolist()
-# x_test, y_test= removeStopwords(validate_set['Content'].tolist()),validate_set['polarity'].tolist()
-x_train, y_train = preprocess_punc_stop(df['Content'].tolist()), df['polarity'].tolist()
-x_test, y_test= preprocess_punc_stop(validate_set['Content'].tolist()),validate_set['polarity'].tolist()
+x_train, y_train = removeStopwords(df['Content'].tolist()), df['polarity'].tolist()
+x_test, y_test= removeStopwords(validate_set['Content'].tolist()),validate_set['polarity'].tolist()
+# x_train, y_train = preprocess_punc_stop(df['Content'].tolist()), df['polarity'].tolist()
+# x_test, y_test= preprocess_punc_stop(validate_set['Content'].tolist()),validate_set['polarity'].tolist()
 
 count = CountVectorizer(max_features=5000, lowercase=True, ngram_range=(1,2),analyzer = stemmed_words)
 temp = count.fit_transform(x_train)
@@ -147,8 +148,12 @@ clf = svm.LinearSVC()
 model= clf.fit(temp2,y_train)
 filename = 'model_sentiment/svm_model.pk'
 
+startTimePredict = time.time()
+
 
 prediction = model.predict(tfidf.transform(count.transform(x_test)))
+
+print("time taken for prediction: " + str((time.time() - startTimePredict)) + " secs")
 
 print("Model accuracy : " + str(np.mean(prediction==y_test)))
 
@@ -164,6 +169,6 @@ print('\nConfussion matrix:\n',confusion_matrix(y_test, prediction)  )
 print("time taken: " + str((time.time() - startTime)) + " secs")
 
 
-z_test = [input("What is your review? ")]
-prediction = model.predict(tfidf.transform(count.transform(z_test)))
-print("prediction is:" + str(prediction[0]))
+# z_test = [input("What is your review? ")]
+# prediction = model.predict(tfidf.transform(count.transform(z_test)))
+# print("prediction is:" + str(prediction[0]))

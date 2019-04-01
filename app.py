@@ -281,28 +281,36 @@ def parse_contents(contents, filename, date):
     
     positiveReviews = removeStopwords(positiveReviews)
     negativeReviews = removeStopwords(negativeReviews)
+    positive_features_df = []
+    negative_features_df = []
 
-    #for positive reviews
-    count_vect_pos = CountVectorizer(max_features=5000, lowercase=True, ngram_range=(1,2))
-    vectorizer_matrix_pos = count_vect_pos.fit_transform(positiveReviews)
-    tfidf_transformer_pos = TfidfTransformer(use_idf=True, smooth_idf=True)
-    tfidf_pos = tfidf_transformer_pos.fit_transform(vectorizer_matrix_pos)
-    # df = pd.DataFrame(tfidf.toarray(), columns = count_vect.get_feature_names())
-    # print(df)
-    weights_pos = np.asarray(tfidf_pos.mean(axis=0)).ravel().tolist()
-    weights_df_pos = pd.DataFrame({'term': count_vect_pos.get_feature_names(), 'weight': weights_pos})
-    positive_features_df =(weights_df_pos.sort_values(by='weight', ascending=False).head(20))    
+    if len(positiveReviews) > 0:
+        #for positive reviews
+        count_vect_pos = CountVectorizer(max_features=5000, lowercase=True, ngram_range=(1,2))
+        vectorizer_matrix_pos = count_vect_pos.fit_transform(positiveReviews)
+        tfidf_transformer_pos = TfidfTransformer(use_idf=True, smooth_idf=True)
+        tfidf_pos = tfidf_transformer_pos.fit_transform(vectorizer_matrix_pos)
+        # df = pd.DataFrame(tfidf.toarray(), columns = count_vect.get_feature_names())
+        # print(df)
+        weights_pos = np.asarray(tfidf_pos.mean(axis=0)).ravel().tolist()
+        weights_df_pos = pd.DataFrame({'term': count_vect_pos.get_feature_names(), 'weight': weights_pos})
+        positive_features_df =(weights_df_pos.sort_values(by='weight', ascending=False).head(20))
+    print('positive: ')
+    print(positive_features_df)    
 
-    #for negative reviews
-    count_vect_neg = CountVectorizer(max_features=5000, lowercase=True, ngram_range=(1,2))
-    vectorizer_matrix_neg = count_vect_neg.fit_transform(negativeReviews)
-    tfidf_transformer_neg = TfidfTransformer(use_idf=True, smooth_idf=True)
-    tfidf_neg = tfidf_transformer_neg.fit_transform(vectorizer_matrix_neg)
-    # df = pd.DataFrame(tfidf.toarray(), columns = count_vect.get_feature_names())
-    # print(df)
-    weights_neg = np.asarray(tfidf_neg.mean(axis=0)).ravel().tolist()
-    weights_df_neg = pd.DataFrame({'term': count_vect_neg.get_feature_names(), 'weight': weights_neg})
-    negative_features_df =(weights_df_neg.sort_values(by='weight', ascending=False).head(20))    
+    if len(negativeReviews) > 0:
+        #for negative reviews
+        count_vect_neg = CountVectorizer(max_features=5000, lowercase=True, ngram_range=(1,2))
+        vectorizer_matrix_neg = count_vect_neg.fit_transform(negativeReviews)
+        tfidf_transformer_neg = TfidfTransformer(use_idf=True, smooth_idf=True)
+        tfidf_neg = tfidf_transformer_neg.fit_transform(vectorizer_matrix_neg)
+        # df = pd.DataFrame(tfidf.toarray(), columns = count_vect.get_feature_names())
+        # print(df)
+        weights_neg = np.asarray(tfidf_neg.mean(axis=0)).ravel().tolist()
+        weights_df_neg = pd.DataFrame({'term': count_vect_neg.get_feature_names(), 'weight': weights_neg})
+        negative_features_df =(weights_df_neg.sort_values(by='weight', ascending=False).head(20))    
+    print('negative: ')
+    print(negative_features_df)
 
     # print("Positive Features:")
     # print(positive_features_df)
@@ -314,7 +322,7 @@ def parse_contents(contents, filename, date):
     # dictToReturn['positive'] = positive
     # dictToReturn['negative'] = negative
 
-    return positive,negative
+    return positive,negative,positive_features_df,negative_features_df
     # return html.Div([
     #     html.H5(filename),
     #     html.H6(datetime.datetime.fromtimestamp(date)),
@@ -342,9 +350,9 @@ def update_upload(list_of_contents, list_of_names, list_of_dates):
         children = [
         parse_contents(c, n, d) for c, n, d in zip(list_of_contents, list_of_names, list_of_dates)]
         # print(children)
-        return generateBarGraph(children[0][0],children[0][1])
+        return generateDisplay(children[0][0],children[0][1], children[0][2], children[0][3])
 
-def generateBarGraph(positive,negative):
+def generateDisplay(positive,negative,positive_features_df,negative_features_df):
     positive_values = [positive[category] for category in categories]
     negative_values = [negative[category] for category in categories]
     # print(positive)
@@ -352,28 +360,113 @@ def generateBarGraph(positive,negative):
     # print(negative)
     # return 'nothing'
 
-    return dcc.Graph(
-            id='sentiment analysis by category',
-            figure = {
-                'data' : [
-                    go.Bar(
-                    {'x': categories[1:], 'y': positive_values[1:], 'name': 'positive sentiment'}
-                    ),
-                    go.Bar(
-                        {'x': categories[1:], 'y': negative_values[1:], 'name': 'negative sentiment'}
-                    )
-                ],
-                'layout': {
-                    'barmode': 'group',
-                    'title': 'Sentiment Distribution by Category',
-                    'plot_bgcolor': colors['background'],
-                    'paper_bgcolor': colors['background'],
-                    'font': {
-                        'color': colors['text']
+    return html.Div([
+            dcc.Graph(
+                id='sentiment analysis by category',
+                figure = {
+                    'data' : [
+                        go.Bar(
+                        {'x': categories[1:], 'y': positive_values[1:], 'name': 'positive sentiment'}
+                        ),
+                        go.Bar(
+                            {'x': categories[1:], 'y': negative_values[1:], 'name': 'negative sentiment'}
+                        )
+                    ],
+                    'layout': {
+                        'barmode': 'group',
+                        'title': 'Sentiment Distribution by Category',
+                        'plot_bgcolor': colors['background'],
+                        'paper_bgcolor': colors['background'],
+                        'font': {
+                            'color': colors['text']
+                        }
                     }
                 }
-            }
-        )
+            ),
+            # data table for positive features
+            html.Div([
+                html.H1(
+                    children='Positive Features',
+                    style={
+                        'textAlign': 'center',
+                        'color': colors['text']
+                }),
+                dash_table.DataTable(
+                    data=positive_features_df.to_dict('rows'),
+                    columns=[{'id': c, 'name': c} for c in positive_features_df.columns],
+                    style_as_list_view=True,
+                    # n_fixed_columns=3,
+                    style_cell={
+                        'padding': '5px',
+                        'backgroundColor': '#111111',
+                        'textAlign': 'left',
+                        'color': '#7FDBFF',
+                        'maxWidth': '180px'
+                    },
+                    style_header={
+                        'backgroundColor': '#111111',
+                        'fontWeight': 'bold',
+                        'color': '#7FDBFF',
+                        'maxWidth': '180px'
+                    },
+                    style_table={
+                        'maxHeight': '500',
+                        'overflowY': 'scroll'
+                    }
+                    # style_cell_conditional=[
+                    # {
+                    #     'backgroundColor': '#111111',
+                    #     'if': {'column_id': c},
+                    #     'textAlign': 'left',
+                    #     'color': '#7FDBFF'
+                    # } for c in positive_features_df.columns
+                    # ]
+                )
+            ], 
+                style = {'display':'inline-block', 'width': '50%'}
+            ), 
+             html.Div([
+                html.H1(
+                    children='Negative Features',
+                    style={
+                        'textAlign': 'center',
+                        'color': colors['text']
+                }),
+                dash_table.DataTable(
+                    data=negative_features_df.to_dict('rows'),
+                    columns=[{'id': c, 'name': c} for c in negative_features_df.columns],
+                    style_as_list_view=True,
+                    # n_fixed_columns=3,
+                    style_cell={
+                        'padding': '5px',
+                        'backgroundColor': '#111111',
+                        'textAlign': 'left',
+                        'color': '#7FDBFF',
+                        'maxWidth': '180px'
+                    },
+                    style_header={
+                        'backgroundColor': '#111111',
+                        'fontWeight': 'bold',
+                        'color': '#7FDBFF',
+                        'maxWidth': '180px'
+                    },
+                    style_table={
+                        'maxHeight': '500',
+                        'overflowY': 'scroll'
+                    }
+                    # style_cell_conditional=[
+                    # {
+                    #     'backgroundColor': '#111111',
+                    #     'if': {'column_id': c},
+                    #     'textAlign': 'left',
+                    #     'color': '#7FDBFF'
+                    # } for c in positive_features_df.columns
+                    # ]
+                )
+            ], 
+                style = {'display':'inline-block', 'width': '50%'}
+            )
+        ])
 
 def runModelSentiment(input_value):
     from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer

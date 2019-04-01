@@ -791,6 +791,15 @@ def runModelSentiment(input_value):
     import numpy as np
     from sentimentAnalysisUtil import stemmed_words,removeStopwords
 
+    #preprocess
+    stop_words = nltk.corpus.stopwords.words('english')
+    stop_words += ['phone','laptop','mobile','camera','the','phones','cameras', 'laptops']
+
+    stopped_review =""
+    for word in input_value.split():
+        if word.lower() not in stop_words:
+            stopped_review +=  word+ " "
+
     #filename = 'model_sentiment/logistic_regression_model.pk'
     #filename = 'model_sentiment/nb_model.pk
     filename = 'model_sentiment/svm_model.pk'
@@ -799,7 +808,7 @@ def runModelSentiment(input_value):
     # load the model from disk
     model = pickle.load(open(filename, 'rb'))
 
-    prediction = model.predict(tfidf.transform(count.transform([input_value])))
+    prediction = model.predict(tfidf.transform(count.transform([stopped_review])))
 
     # print('predicting sentiment')
     if (prediction[0] == 0):

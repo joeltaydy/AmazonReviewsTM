@@ -36,18 +36,18 @@ negative_df = df[df.polarity ==0]
 difference = positive_df/negative_df
 df = pd.concat([negative_df, negative_df,negative_df,negative_df,positive_df])
 
-df['Content'] =removeStopwords(df['Content'].tolist())
-#df['Content']=preprocess_punc_stop(df['Content'].tolist())
+#df['Content'] =removeStopwords(df['Content'].tolist())
+df['Content']=preprocess_punc_stop(df['Content'].tolist())
 
 print("pre processing donez")
 #Scores of average Linear SVC in cross validation
-scores = []
 count = 1
 #Instantiate cross validation folds
 ss = ShuffleSplit(n_splits=5, test_size=0.20, random_state=0)
-counter =1
 
 for eachModel in all_model:
+    scores = []
+    counter =1
     print("*"*10 + "Model name: " + eachModel['model_name']+" "+"*"*10)
     # cross validation,k = 5
     startModelTime= time.time()
@@ -108,7 +108,7 @@ for eachModel in all_model:
     x_train, y_train =df['Content'].tolist(), df['polarity'].tolist()
     x_test, y_test= preprocess_punc_stop(validate_set['Content'].tolist()),validate_set['polarity'].tolist()
 
-    count = CountVectorizer(max_features=5000, lowercase=True, ngram_range=(1,2),analyzer = stemmed_words)
+    count = CountVectorizer(max_features=5000, lowercase=False, ngram_range=(1,2),analyzer = stemmed_words)
     #no lowercase
     # count = CountVectorizer(max_features=5000, ngram_range=(1,2),analyzer = stemmed_words)
     temp = count.fit_transform(x_train)

@@ -41,19 +41,16 @@ for i in range(0,5):
     print(docs[i])"""
 
 print('Finished reading sentences from the training data file. Time: ', time.time()-startTime )
-
+main_df['Content'] =removeStopwords(main_df['Content'].tolist())
 #x_train, x_test, y_train, y_test = train_test_split(docs,label,test_size =0.3, random_state=50)
 df, validate_set = train_test_split(main_df, test_size=0.20, random_state=0)
 positive_df = df[df.polarity == 1]
 negative_df = df[df.polarity ==0]
 difference = positive_df/negative_df
 df = pd.concat([negative_df, negative_df,negative_df,negative_df,positive_df])
+print(len(positive_df))
+print(len(negative_df))
 
-"""k_fold = KFold(n=len(x_train), n_folds=3)  
-pipeline= Pipeline([('count',CountVectorizer(max_features=1000, lowercase=True, stop_words= 'english', ngram_range=(1,1),analyzer = stemmed_words)),
- ('tfidf', TfidfTransformer(use_idf=True, smooth_idf=True)), ('clf', LogisticRegression())
-])
-"""
 """
 #Scores of average naive bayes classifier in cross validation
 scores = []
@@ -116,8 +113,8 @@ print("Time taken: " + str(time.time() - startTime))
 """
 
 print("*"*10+ "Training final model" + "*"*10 )
-x_train, y_train = removeStopwords(df['Content'].tolist()), df['polarity'].tolist()
-x_test, y_test= removeStopwords(validate_set['Content'].tolist()),validate_set['polarity'].tolist()
+x_train, y_train = df['Content'].tolist(), df['polarity'].tolist()
+x_test, y_test= validate_set['Content'].tolist(),validate_set['polarity'].tolist()
 # x_train, y_train = preprocess_punc_stop(df['Content'].tolist()), df['polarity'].tolist()
 # x_test, y_test= preprocess_punc_stop(validate_set['Content'].tolist()),validate_set['polarity'].tolist()
 
@@ -158,9 +155,9 @@ print("time taken for prediction: " + str((time.time() - startTimePredict)) + " 
 print("Model accuracy : " + str(np.mean(prediction==y_test)))
 
 print("*"*10+ "Saving final model" + "*"*10 )
-# pickle.dump(model, open(filename, 'wb'))
-# pickle.dump(tfidf, open('model_sentiment/tfidf_trans.pk', 'wb'))
-# pickle.dump(count, open('model_sentiment/count_vert.pk', 'wb'))
+pickle.dump(model, open(filename, 'wb'))
+pickle.dump(tfidf, open('model_sentiment/tfidf_trans.pk', 'wb'))
+pickle.dump(count, open('model_sentiment/count_vert.pk', 'wb'))
 
 
 print('\nClasification report:\n', classification_report(y_test, prediction))

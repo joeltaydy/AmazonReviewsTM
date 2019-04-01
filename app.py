@@ -22,22 +22,6 @@ allBrands = []
 displaySentByCategoryX = []
 displaySentByCategoryY = []
 
-def generateTable(dataframe, max_rows=10):
-    return html.Table(
-        # Header
-        [html.Tr([html.Th(col) for col in dataframe.columns])] +
-
-        # Body
-        [html.Tr([
-            html.Td(dataframe.iloc[i][col]) for col in dataframe.columns
-        ]) for i in range(min(len(dataframe), max_rows))],
-        style={
-            'background': '#111111',
-            'text': '#7FDBFF',
-            'align': 'center'
-        }
-    )
-
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
@@ -152,6 +136,10 @@ app.layout = html.Div(style={'backgroundColor': colors['background']}, children=
 
     dcc.Graph(
         id='sentiment analysis time series analysis (Laptop)',
+    ),
+    
+    dcc.Graph(
+        id='Pie Chart',
     )
     # dcc.Graph(
     #     id='example-graph-2',
@@ -193,6 +181,33 @@ def update_graph(selected_dropdown_value):
          'layout': {
                 'barmode': 'group',
                 'title': 'Time Series Sentiment Analysis (' +selected_dropdown_value+")",
+                'plot_bgcolor': colors['background'],
+                'paper_bgcolor': colors['background'],
+                'font': {
+                    'color': colors['text']
+                }
+        }
+    }
+
+@app.callback(Output('Pie Chart', 'figure'),
+            [Input('category_dropdown', 'value')],
+)
+
+def updatePieChart(value):
+    main_df = pd.read_csv("data/preprocessed_reviewinfo.csv", index_col=False)
+    if value !="all":
+        main_df= main_df[main_df['category']== value]
+    positive_df = main_df.loc[main_df['polarity'] == 1].agg('count')['Content']
+    negative_df = main_df.loc[main_df['polarity'] == 0].agg('count')['Content']
+    print(positive_df)
+    return {
+        'data': [
+            go.Pie(
+        values=[positive_df, negative_df],
+        labels=['positive','negative']
+        )],
+        'layout': {
+                'title': 'Pie Chart (' +value+")",
                 'plot_bgcolor': colors['background'],
                 'paper_bgcolor': colors['background'],
                 'font': {
@@ -337,8 +352,8 @@ def parse_contents(contents, filename, date):
     
     positiveReviews = removeStopwords(positiveReviews)
     negativeReviews = removeStopwords(negativeReviews)
-    positive_features_df = []
-    negative_features_df = []
+    positive_features_df = pd.DataFrame(columns=['term','weight'])
+    negative_features_df = pd.DataFrame(columns=['term','weight'])
 
     if len(positiveReviews) > 0:
         #for positive reviews

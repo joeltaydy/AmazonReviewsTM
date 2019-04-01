@@ -55,7 +55,7 @@ app.layout = html.Div(style={'backgroundColor': colors['background']}, children=
     
     html.Div([
         html.H2(
-        children='Enter Review',
+        children='Enter Review:',
         style={
             'textAlign': 'center',
             'color': colors['text']

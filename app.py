@@ -17,6 +17,7 @@ from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 
 categories = ['all','cameras', 'laptops', 'mobile phone']
 tableView = pd.DataFrame(columns=['review', 'category', 'sentiment'])
+brands = ['sony', 'nokia', 'apple', 'samsung']
 displaySentByCategoryX = []
 displaySentByCategoryY = []
 
@@ -233,7 +234,7 @@ def update_output(n_clicks, review):
                 'backgroundColor': '#111111',
                 'textAlign': 'left',
                 'color': '#7FDBFF',
-                'maxWidth': '180px'
+                
             },
             style_header={
                 'backgroundColor': '#111111',
@@ -253,9 +254,7 @@ def update_output(n_clicks, review):
                 'maxHeight': '300'
             },
         )
-    ],
-        style = {'display':'inline-block', 'width': '50%'}
-    )
+    ])
     return table
 
 def parse_contents(contents, filename, date):

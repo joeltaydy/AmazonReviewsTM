@@ -14,6 +14,10 @@ from sentimentAnalysisUtil import stemmed_words,get_top_n_words,removeStopwords,
 import pandas as pd
 import statistics
 
+'''
+All model declaration
+'''
+all_model = [{'model_name':"logistic regression", "model": LogisticRegression()},{'model_name':"Naive Bayes", "model": MultinomialNB()},{'model_name':"SVM Linear", "model": svm.LinearSVC()} ]
 
 startTime = time.time()
 field='Content'
@@ -32,121 +36,108 @@ negative_df = df[df.polarity ==0]
 difference = positive_df/negative_df
 df = pd.concat([negative_df, negative_df,negative_df,negative_df,positive_df])
 
+df.assign(Content=removeStopwords(df['Content'].tolist()))
+#df.assign(Content=preprocess_punc_stop(df['Content'].tolist()))
+print("pre processing donez")
 #Scores of average Linear SVC in cross validation
 scores = []
 count = 1
 #Instantiate cross validation folds
 ss = ShuffleSplit(n_splits=5, test_size=0.20, random_state=0)
 counter =1
-# cross validation,k = 5
-for train_index, test_index in ss.split(df):
-    train_df = df.iloc[train_index] #the 4 partitions
-    test_df = df.iloc[test_index] #the 1 partition to test
-    x_train, y_train = removeStopwords(train_df['Content'].tolist()), train_df['polarity'].tolist()
-    x_test, y_test= removeStopwords(test_df['Content'].tolist()),test_df['polarity'].tolist()
-    # x_train, y_train = preprocess_punc_stop(train_df['Content'].tolist()), train_df['polarity'].tolist()
-    # x_test, y_test= preprocess_punc_stop(test_df['Content'].tolist()),test_df['polarity'].tolist()
 
-    # print(x_train)
-    # exit() 
-    print("Converting to tfidf")
-    # Preparing documents into list according to categories
-    start = time.time()
+for model in all_model:
+    print("*"*10 + "Model name: " + model['model_name']+" "+"*"*10)
+    # cross validation,k = 5
+    startModelTime= time.time()
+    for train_index, test_index in ss.split(df):
+        train_df = df.iloc[train_index] #the 4 partitions
+        test_df = df.iloc[test_index] #the 1 partition to test
+        x_train, y_train = train_df['Content'].tolist(), train_df['polarity'].tolist()
+        x_test, y_test=test_df['Content'].tolist(),test_df['polarity'].tolist()
+        # x_train, y_train = preprocess_punc_stop(train_df['Content'].tolist()), train_df['polarity'].tolist()
+        # x_test, y_test= preprocess_punc_stop(test_df['Content'].tolist()),test_df['polarity'].tolist()
+
+        # print(x_train)
+        # exit() 
+        print("Converting to tfidf for " +model['model_name'] )
+        # Preparing documents into list according to categories
+        start = time.time()
+        count = CountVectorizer(max_features=5000, lowercase=True, ngram_range=(1,2),analyzer = stemmed_words)
+        temp = count.fit_transform(x_train)
+        tfidf = TfidfTransformer(use_idf=True, smooth_idf=True)
+        temp2 = tfidf.fit_transform(temp)
+
+
+        """### Logistic Regression
+        logRegression = LogisticRegression()
+        model = logRegression.fit(temp2,y_train)
+        filename = 'model_sentiment/logistic_regression_model.pk'"""
+
+        
+        """## Naive bayes 
+        clf = MultinomialNB()
+        model= clf.fit(temp2,y_train)
+        filename = 'model_sentiment/nb_model.pk'
+    """
+        
+        ### Support Vector Machine
+        clf = model['model']
+        model= clf.fit(temp2,y_train)
+        
+        prediction = model.predict(tfidf.transform(count.transform(x_test)))
+
+        print("Iteration " + str(counter) +" " + model['model_name'] +" Model accuracy : " + str(np.mean(prediction==y_test)))
+        counter=counter+1
+        #add to list of scores
+        scores.append(np.mean(prediction==y_test))
+        #get_top_n_words(temp,count)
+        weights = np.asarray(temp2.mean(axis=0)).ravel().tolist()
+        weights_df = pd.DataFrame({'term': count.get_feature_names(), 'weight': weights})
+        print(weights_df.sort_values(by='weight', ascending=False).head(20))    
+        end = time.time()
+        print("time taken: " + str((end - start)) + " secs")
+
+    print("\nCross Validation Average Score: " + str(statistics.mean(scores)))
+    print("Time taken: " + str(time.time() - startModelTime)) 
+
+    print("*"*10+ "Training final model " +model['model_name']+" " + "*"*10 )
+    x_train, y_train = removeStopwords(df['Content'].tolist()), df['polarity'].tolist()
+    x_test, y_test= removeStopwords(validate_set['Content'].tolist()),validate_set['polarity'].tolist()
+    # x_train, y_train = preprocess_punc_stop(df['Content'].tolist()), df['polarity'].tolist()
+    # x_test, y_test= preprocess_punc_stop(validate_set['Content'].tolist()),validate_set['polarity'].tolist()
+
     count = CountVectorizer(max_features=5000, lowercase=True, ngram_range=(1,2),analyzer = stemmed_words)
+    #no lowercase
+    # count = CountVectorizer(max_features=5000, ngram_range=(1,2),analyzer = stemmed_words)
     temp = count.fit_transform(x_train)
     tfidf = TfidfTransformer(use_idf=True, smooth_idf=True)
     temp2 = tfidf.fit_transform(temp)
 
 
-    """### Logistic Regression
-    logRegression = LogisticRegression()
-    model = logRegression.fit(temp2,y_train)
-    filename = 'model_sentiment/logistic_regression_model.pk'"""
-
-    
-    """## Naive bayes 
-    clf = MultinomialNB()
-    model= clf.fit(temp2,y_train)
-    filename = 'model_sentiment/nb_model.pk'
-"""
-    
     ### Support Vector Machine
-    clf = svm.LinearSVC()
+    clf = model['model']
     model= clf.fit(temp2,y_train)
-    filename = 'model_sentiment/svm_model.pk'
-    
+
+    startTimePredict = time.time()
     prediction = model.predict(tfidf.transform(count.transform(x_test)))
 
-    print("Iteration " + str(counter) + " Model accuracy : " + str(np.mean(prediction==y_test)))
-    counter=counter+1
-    #add to list of scores
-    scores.append(np.mean(prediction==y_test))
-    #get_top_n_words(temp,count)
-    weights = np.asarray(temp2.mean(axis=0)).ravel().tolist()
-    weights_df = pd.DataFrame({'term': count.get_feature_names(), 'weight': weights})
-    print(weights_df.sort_values(by='weight', ascending=False).head(20))    
-    end = time.time()
-    print("time taken: " + str((end - start)) + " secs")
+    print("time taken for prediction: " + str((time.time() - startTimePredict)) + " secs")
 
-print("\nCross Validation Average Score: " + str(statistics.mean(scores)))
-print("Time taken: " + str(time.time() - startTime))
+    print("Model accuracy " + model['model_name']+ ": " + str(np.mean(prediction==y_test)))
+
+    #print("*"*10+ "Saving final model" + "*"*10 )
+    # pickle.dump(model, open(filename, 'wb'))
+    # pickle.dump(tfidf, open('model_sentiment/tfidf_trans.pk', 'wb'))
+    # pickle.dump(count, open('model_sentiment/count_vert.pk', 'wb'))
 
 
-print("*"*10+ "Training final model" + "*"*10 )
-x_train, y_train = removeStopwords(df['Content'].tolist()), df['polarity'].tolist()
-x_test, y_test= removeStopwords(validate_set['Content'].tolist()),validate_set['polarity'].tolist()
-# x_train, y_train = preprocess_punc_stop(df['Content'].tolist()), df['polarity'].tolist()
-# x_test, y_test= preprocess_punc_stop(validate_set['Content'].tolist()),validate_set['polarity'].tolist()
-
-count = CountVectorizer(max_features=5000, lowercase=True, ngram_range=(1,2),analyzer = stemmed_words)
-#no lowercase
-# count = CountVectorizer(max_features=5000, ngram_range=(1,2),analyzer = stemmed_words)
-temp = count.fit_transform(x_train)
-tfidf = TfidfTransformer(use_idf=True, smooth_idf=True)
-temp2 = tfidf.fit_transform(temp)
-
-
-# un comment model for fitting
-'''
-### Logistic Regression
-logRegression = LogisticRegression()
-model = logRegression.fit(temp2,y_train)
-filename = 'model_sentiment/logistic_regression_model.pk'
-'''
-
-'''
-## Naive bayes 
-clf = MultinomialNB()
-model= clf.fit(temp2,y_train)
-filename = 'model_sentiment/nb_model.pk
-'''
-
-
-### Support Vector Machine
-clf = svm.LinearSVC()
-model= clf.fit(temp2,y_train)
-filename = 'model_sentiment/svm_model.pk'
-
-startTimePredict = time.time()
-
-
-prediction = model.predict(tfidf.transform(count.transform(x_test)))
-
-print("time taken for prediction: " + str((time.time() - startTimePredict)) + " secs")
-
-print("Model accuracy : " + str(np.mean(prediction==y_test)))
-
-print("*"*10+ "Saving final model" + "*"*10 )
-# pickle.dump(model, open(filename, 'wb'))
-# pickle.dump(tfidf, open('model_sentiment/tfidf_trans.pk', 'wb'))
-# pickle.dump(count, open('model_sentiment/count_vert.pk', 'wb'))
-
-
-print('\nClasification report:\n', classification_report(y_test, prediction))
-print('\nConfussion matrix:\n',confusion_matrix(y_test, prediction)  )
-    
+    print('\nClasification report:\n', classification_report(y_test, prediction))
+    print('\nConfussion matrix:\n',confusion_matrix(y_test, prediction)  )
+        
+    print("time taken: " + str((time.time() - startModelTime)) + " secs")
+print("congrats thanks for your patience!!!")
 print("time taken: " + str((time.time() - startTime)) + " secs")
-
 
 # z_test = [input("What is your review? ")]
 # prediction = model.predict(tfidf.transform(count.transform(z_test)))

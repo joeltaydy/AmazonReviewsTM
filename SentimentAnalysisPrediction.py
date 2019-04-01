@@ -35,9 +35,10 @@ positive_df = df[df.polarity == 1]
 negative_df = df[df.polarity ==0]
 difference = positive_df/negative_df
 df = pd.concat([negative_df, negative_df,negative_df,negative_df,positive_df])
+print(df['Content'])
+df['Content'] =removeStopwords(df['Content'].tolist())
+#df['Content']=preprocess_punc_stop(df['Content'].tolist())
 
-# df.assign(Content=removeStopwords(df['Content'].tolist()))
-df.assign(Content=preprocess_punc_stop(df['Content'].tolist()))
 print("pre processing donez")
 #Scores of average Linear SVC in cross validation
 scores = []
@@ -63,7 +64,7 @@ for eachModel in all_model:
         print("Converting to tfidf for " +eachModel['model_name'] )
         # Preparing documents into list according to categories
         start = time.time()
-        count = CountVectorizer(max_features=5000, lowercase=True, ngram_range=(1,2),analyzer = stemmed_words)
+        count = CountVectorizer(max_features=5000, lowercase=False, ngram_range=(1,2),analyzer = stemmed_words)
         temp = count.fit_transform(x_train)
         tfidf = TfidfTransformer(use_idf=True, smooth_idf=True)
         temp2 = tfidf.fit_transform(temp)

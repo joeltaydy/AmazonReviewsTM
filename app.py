@@ -17,7 +17,8 @@ from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 
 categories = ['all','cameras', 'laptops', 'mobile phone']
 tableView = pd.DataFrame(columns=['review', 'category', 'sentiment'])
-brands = ['sony', 'nokia', 'apple', 'samsung']
+brands = ['sony', 'nokia','samsung']
+allBrands = []
 displaySentByCategoryX = []
 displaySentByCategoryY = []
 
@@ -285,6 +286,13 @@ def parse_contents(contents, filename, date):
     
     positiveReviews=[]
     negativeReviews=[]
+    # allBrands={}
+
+    # for brand in brands:
+    #     allBrands[brand]={}
+    #     allBrands[brand]['positive'] = pd.DataFrame(columns=['Review'])
+    #     allBrands[brand]['negative'] = pd.DataFrame(columns=['Review'])
+    
     
     for row in df.iterrows():
         review = row[1]['Content']
@@ -294,13 +302,24 @@ def parse_contents(contents, filename, date):
             currentNumInCategory = positive[category]
             positive[category] = currentNumInCategory + 1
             positiveReviews.append(review)
+            # updatedReview = review.lower()
+            # for brand in brands:
+            #     b = allBrands[brand]
+            #     if brand in updatedReview:
+            #         b['positive'].append(pd.Series([review], index=b['positive'].columns),ignore_index = True)
             # print('positive')
         else:
             currentNumInCategory = negative[category]
             negative[category] = currentNumInCategory - 1
             negativeReviews.append(review)
+            # updatedReview = review.lower()
+            # for brand in brands:
+            #     b = allBrands[brand]
+            #     if brand in updatedReview:
+            #         b['negative'].append(pd.Series([review], index=b['negative'].columns),ignore_index = True)
             # print('negative')
-
+    # print('all brands: ')
+    # print(allBrands['sony']['positive'])
     numSampleReviews = 5
     positiveReviewsToBeDisplayed = pd.DataFrame(columns=['Review'])
     negativeReviewsToBeDisplayed = pd.DataFrame(columns=['Review'])
@@ -345,7 +364,9 @@ def parse_contents(contents, filename, date):
         # print(df)
         weights_neg = np.asarray(tfidf_neg.mean(axis=0)).ravel().tolist()
         weights_df_neg = pd.DataFrame({'term': count_vect_neg.get_feature_names(), 'weight': weights_neg})
-        negative_features_df =(weights_df_neg.sort_values(by='weight', ascending=False).head(20))    
+        negative_features_df =(weights_df_neg.sort_values(by='weight', ascending=False).head(20)) 
+
+    categoryFeatures_df = getCategoryFeatures(numSampleReviews)
     # print('negative: ')
     # print(negative_features_df)
 
@@ -359,7 +380,7 @@ def parse_contents(contents, filename, date):
     # dictToReturn['positive'] = positive
     # dictToReturn['negative'] = negative
 
-    return positive,negative,positive_features_df,negative_features_df,positiveReviewsToBeDisplayed,negativeReviewsToBeDisplayed
+    return positive,negative,positive_features_df,negative_features_df,positiveReviewsToBeDisplayed,negativeReviewsToBeDisplayed, categoryFeatures_df, allBrands
     # return html.Div([
     #     html.H5(filename),
     #     html.H6(datetime.datetime.fromtimestamp(date)),
@@ -387,9 +408,9 @@ def update_upload(list_of_contents, list_of_names, list_of_dates):
         children = [
         parse_contents(c, n, d) for c, n, d in zip(list_of_contents, list_of_names, list_of_dates)]
         # print(children)
-        return generateDisplay(children[0][0],children[0][1], children[0][2], children[0][3],children[0][4],children[0][5])
+        return generateDisplay(children[0][0],children[0][1], children[0][2], children[0][3],children[0][4],children[0][5],children[0][6],children[0][7])
 
-def generateDisplay(positive,negative,positive_features_df,negative_features_df,positiveReviewsToBeDisplayed,negativeReviewsToBeDisplayed):
+def generateDisplay(positive,negative,positive_features_df,negative_features_df,positiveReviewsToBeDisplayed,negativeReviewsToBeDisplayed,categoryFeatures_df,allBrands):
     positive_values = [positive[category] for category in categories]
     negative_values = [negative[category] for category in categories]
     # print(positive)
@@ -581,8 +602,170 @@ def generateDisplay(positive,negative,positive_features_df,negative_features_df,
                 )
             ], 
                 style = {'display':'inline-block', 'width': '50%'}
-            )
+            ),
+            html.Div([
+                html.H2(
+                    children='Sample Category Reviews',
+                    style={
+                        'textAlign': 'center',
+                        'color': colors['text']
+                }),
+
+                dash_table.DataTable(
+                    data=categoryFeatures_df.to_dict('rows'),
+                    columns=[{'id': c, 'name': c} for c in categoryFeatures_df.columns],
+                    style_as_list_view=True,
+                    # n_fixed_columns=3,
+                    style_cell={
+                        'padding': '5px',
+                        'backgroundColor': '#111111',
+                        'textAlign': 'left',
+                        'color': '#7FDBFF',
+                        'textOverflow': 'ellipsis'
+                    },
+                    style_header={
+                        'backgroundColor': '#111111',
+                        'fontWeight': 'bold',
+                        'color': '#7FDBFF',
+                        'maxWidth': '180px'
+                    },
+                    style_table={
+                        'maxHeight': '500',
+                        'overflowY': 'scroll'
+                    }
+                    # style_cell_conditional=[
+                    # {
+                    #     'backgroundColor': '#111111',
+                    #     'if': {'column_id': c},
+                    #     'textAlign': 'left',
+                    #     'color': '#7FDBFF'
+                    # } for c in positive_features_df.columns
+                    # ]
+                )
+            ]),
+            # html.Div([
+            #     html.H2(
+            #         children = 'Select Your Brand: ',
+            #         style={
+            #             'textAlign': 'center',
+            #             'color': colors['text']
+            #         }
+            #     ),
+            #     dcc.Dropdown(
+            #         id='brand_dropdown',
+            #         options=[{'label':brand, 'value':brand} for brand in brands],
+            #         value=brands[0]
+            #     ),
+            #     html.Div(id='brand_table')
+            # ])
         ])
+
+# @app.callback(Output('brand_table', 'children'),
+#             [Input('brand_dropdown', 'value')],
+# )
+
+# def getBrandTable(input_value):
+#     return html.Div([
+#                 html.H2(
+#                     children='Positive Reviews in selected brand',
+#                     style={
+#                         'textAlign': 'center',
+#                         'color': colors['text']
+#                 }),
+
+#                 dash_table.DataTable(
+#                     data=allBrands[input_value]['positive'].to_dict('rows'),
+#                     columns=[{'id': c, 'name': c} for c in allBrands[input_value][positive].columns],
+#                     style_as_list_view=True,
+#                     # n_fixed_columns=3,
+#                     style_cell={
+#                         'padding': '5px',
+#                         'backgroundColor': '#111111',
+#                         'textAlign': 'left',
+#                         'color': '#7FDBFF',
+#                         'maxWidth': '180px'
+#                     },
+#                     style_header={
+#                         'backgroundColor': '#111111',
+#                         'fontWeight': 'bold',
+#                         'color': '#7FDBFF',
+#                         'maxWidth': '180px'
+#                     },
+#                     style_table={
+#                         'maxHeight': '500',
+#                         'overflowY': 'scroll'
+#                     }
+#                     # style_cell_conditional=[
+#                     # {
+#                     #     'backgroundColor': '#111111',
+#                     #     'if': {'column_id': c},
+#                     #     'textAlign': 'left',
+#                     #     'color': '#7FDBFF'
+#                     # } for c in positive_features_df.columns
+#                     # ]
+#                 )
+#             ])
+
+def getCategoryFeatures(numSampleReviews):
+    from gensim import corpora
+
+    import sklearn
+    from sklearn.preprocessing import LabelEncoder
+    from sklearn.model_selection import train_test_split,ShuffleSplit
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
+    from sklearn.feature_extraction.text import TfidfVectorizer
+    from sklearn import model_selection, naive_bayes, svm
+    from sklearn.metrics import accuracy_score
+    from sklearn.metrics import classification_report
+    from sklearn.metrics import confusion_matrix
+
+    import numpy as np
+    from sklearn.naive_bayes import MultinomialNB
+    from sklearn import svm
+    from sklearn.metrics import classification_report,confusion_matrix,accuracy_score
+    import pickle
+    import pandas as pd
+    import re
+    import statistics
+    import random
+
+    #Load the saved feature extraction 
+    classifier_saved = open("model_classification/FeatureExtraction.pickle", "rb") #binary read
+    classifier = pickle.load(classifier_saved)
+    classifier_saved.close()
+
+    # Extract the key features and put into dataframe
+
+    list_1 = classifier.most_informative_features(numSampleReviews)
+    df_important_features = pd.DataFrame(columns=['Feature','Cat1_Cat0','Ratio_1'])
+
+    for (fname, fval) in list_1:
+        cpdist = classifier._feature_probdist
+        
+        def labelprob(l):
+            return cpdist[l, fname].prob(fval)
+
+        labels = sorted(
+            [l for l in classifier._labels if fval in cpdist[l, fname].samples()],
+            key=labelprob
+        )
+        
+        if len(labels) == 1:
+            continue
+        l0 = labels[0]
+        l1 = labels[-1]
+        if cpdist[l0, fname].prob(fval) == 0:
+            ratio = 'INF'
+        else:
+            ratio = round(cpdist[l1, fname].prob(fval) / cpdist[l0, fname].prob(fval), 1)
+            fname = fname.replace('contains(','')
+            fname = fname.replace(')','')        
+            df_important_features.loc[len(df_important_features)] = [fname, l1+" : "+l0, 
+                                                    str(ratio)+" : 1.0"]
+    print('category features: ')
+    print(df_important_features)
+    return df_important_features
 
 def runModelSentiment(input_value):
     from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
@@ -603,7 +786,7 @@ def runModelSentiment(input_value):
 
     prediction = model.predict(tfidf.transform(count.transform([input_value])))
 
-    print('predicting sentiment')
+    # print('predicting sentiment')
     if (prediction[0] == 0):
         return 'negative'
     return 'positive'
@@ -620,9 +803,6 @@ def runModelCategoryClassification(input_value):
     from sklearn import svm
     import pickle
     import pandas as pd
-
-    # Load the processed reviews
-    main_df = pd.read_csv('data/processed_reviews.csv')
 
     # Load the classifier
     classifier_saved = open("model_classification/CategoryClassifier.pickle", "rb")
@@ -642,13 +822,51 @@ def runModelCategoryClassification(input_value):
     test_TFIDF = TFIDF_vect.transform(review_holder_1)
     prediction = classifier.predict(test_TFIDF)
 
-    print('predicting category')
+    # print('predicting category')
     if prediction[0] == 0:
         return "cameras"
     elif prediction[0] == 1:
         return "laptops"
     else:
         return "mobile phone"
+
+    # import sklearn
+    # from sklearn.model_selection import train_test_split,ShuffleSplit
+    # from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
+    # from sklearn.feature_extraction.text import TfidfVectorizer
+    # from sklearn import model_selection, naive_bayes, svm
+
+    # import numpy as np
+    # from sklearn import svm
+    # import pickle
+    # import pandas as pd
+
+    # # Load the classifier
+    # classifier_saved = open("model_classification/CategoryClassifier.pickle", "rb")
+    # classifier = pickle.load(classifier_saved)
+    # classifier_saved.close()
+
+    # #Load the saved classifier 
+    # classifier_saved = open("model_classification/TFIDF_Reviews_Category.pickle", "rb") #binary read
+    # TFIDF_vect = pickle.load(classifier_saved)
+    # classifier_saved.close()
+
+    # #process input
+    # review_holder = np.array([input_value])
+    # review_holder_1 = pd.Series(review_holder)
+
+    # # Transform reviews into TFIDF
+    # review_TFIDF = TFIDF_vect.transform(review_holder_1)
+    # prediction = classifier.predict(review_TFIDF)
+
+    # print('predicting category')
+    # if prediction[0] == 0:
+    #     return 'cameras'
+    # elif prediction[0] == 1:
+    #     return 'laptops'
+    # else:
+    #     return 'mobile phone'
+
 
 
 

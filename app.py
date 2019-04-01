@@ -47,29 +47,40 @@ colors = {
                     
 app.layout = html.Div(style={'backgroundColor': colors['background']}, children=[
     html.H1(
-        children='Dashboard',
+        children='Text-Mining Dashboard',
         style={
             'textAlign': 'center',
             'color': colors['text']
         }),
-
-    html.Div(children='''
-        Dash: A web application framework for Python.''', style={
-        'textAlign': 'center',
-        'color': colors['text']
-    }),
     
     html.Div([
-            dcc.Input(id='review', value='Enter Review', type='text'),
-            html.Button(id='submit-button', type='submit', children='Submit'),
-            html.Div(id='output_div')
-    ]),
+        html.H2(
+        children='Enter Review',
+        style={
+            'textAlign': 'center',
+            'color': colors['text']
+        }),   
+        dcc.Input(id='review', value='', type='text'),
+        html.Button(id='submit-button', type='submit', children='Submit'),
+        html.Div(id='output_div')
+    ],
+        style = {
+            'textAlign': 'center'
+        }
+    ),
 
     # html.Div(children = [
     #     html.H4(children='Output'),
     #     generateTable(tableView)
     # ]),
     html.Div([
+        html.H2(
+            children='Upload CSV File: ',
+            style={
+                'textAlign': 'center',
+                'color': colors['text']
+            }
+        ),   
         dcc.Upload(
             id='upload-data',
             children=html.Div([
@@ -92,7 +103,6 @@ app.layout = html.Div(style={'backgroundColor': colors['background']}, children=
         ),
         html.Div(id='output-data-upload')
     ]),
-
     # dcc.Dropdown(
     #     id='category_dropdown_bar',
     #     options=[{'label':category, 'value':category} for category in categories],
@@ -123,11 +133,20 @@ app.layout = html.Div(style={'backgroundColor': colors['background']}, children=
     # ),
 
      # drop down list to select which category do you want to look at
-    dcc.Dropdown(
-        id='category_dropdown',
-        options=[{'label':category, 'value':category} for category in categories],
-        value=categories[0]
-    ),
+    html.Div([
+        html.H2(
+            children = 'Select Your Category: ',
+            style={
+                'textAlign': 'center',
+                'color': colors['text']
+            }
+        ),
+        dcc.Dropdown(
+            id='category_dropdown',
+            options=[{'label':category, 'value':category} for category in categories],
+            value=categories[0]
+        )
+    ]),
 
     dcc.Graph(
         id='sentiment analysis time series analysis (Laptop)',
@@ -190,7 +209,7 @@ def update_graph(selected_dropdown_value):
 
 def update_output(n_clicks, review):
     # tableView = pd.DataFrame(columns=['review', 'category', 'sentiment'])
-    if review == "Enter Review":
+    if review == '':
         return
     # run review through sentiment
     sentiment = runModelSentiment(review)
@@ -203,33 +222,39 @@ def update_output(n_clicks, review):
     row = pd.Series([review, category, sentiment], index=tableView.columns)
     view = tableView.append(row, ignore_index = True)
     print(row)
-    table = dash_table.DataTable(
-        data=view.to_dict('rows'),
-        columns=[{'id': c, 'name': c} for c in view.columns],
-        style_as_list_view=True,
-        # n_fixed_columns=3,
-        style_cell={
-            'padding': '5px',
-            'backgroundColor': '#111111',
-            'textAlign': 'left',
-            'color': '#7FDBFF',
-            'maxWidth': '180px'
-        },
-        style_header={
-            'backgroundColor': '#111111',
-            'fontWeight': 'bold',
-            'color': '#7FDBFF',
-            'maxWidth': '180px'
-        },
-        style_cell_conditional=[
-        {
-            'backgroundColor': '#111111',
-            'if': {'column_id': c},
-            'textAlign': 'left',
-            'color': '#7FDBFF'
-        } for c in view.columns
-        
-    ]
+    table = html.Div([
+        dash_table.DataTable(
+            data=view.to_dict('rows'),
+            columns=[{'id': c, 'name': c} for c in view.columns],
+            style_as_list_view=True,
+            # n_fixed_columns=3,
+            style_cell={
+                'padding': '5px',
+                'backgroundColor': '#111111',
+                'textAlign': 'left',
+                'color': '#7FDBFF',
+                'maxWidth': '180px'
+            },
+            style_header={
+                'backgroundColor': '#111111',
+                'fontWeight': 'bold',
+                'color': '#7FDBFF',
+                'maxWidth': '180px'
+            },
+            style_cell_conditional=[
+            {
+                'backgroundColor': '#111111',
+                'if': {'column_id': c},
+                'textAlign': 'left',
+                'color': '#7FDBFF'
+            } for c in view.columns
+            ],
+            style_table={
+                'maxHeight': '300'
+            },
+        )
+    ],
+        style = {'display':'inline-block', 'width': '50%'}
     )
     return table
 
@@ -385,7 +410,7 @@ def generateDisplay(positive,negative,positive_features_df,negative_features_df)
             ),
             # data table for positive features
             html.Div([
-                html.H1(
+                html.H2(
                     children='Positive Features',
                     style={
                         'textAlign': 'center',
@@ -426,7 +451,7 @@ def generateDisplay(positive,negative,positive_features_df,negative_features_df)
                 style = {'display':'inline-block', 'width': '50%'}
             ), 
              html.Div([
-                html.H1(
+                html.H2(
                     children='Negative Features',
                     style={
                         'textAlign': 'center',

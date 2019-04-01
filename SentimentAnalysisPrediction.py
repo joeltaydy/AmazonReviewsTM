@@ -35,7 +35,7 @@ positive_df = df[df.polarity == 1]
 negative_df = df[df.polarity ==0]
 difference = positive_df/negative_df
 df = pd.concat([negative_df, negative_df,negative_df,negative_df,positive_df])
-print(df['Content'])
+
 df['Content'] =removeStopwords(df['Content'].tolist())
 #df['Content']=preprocess_punc_stop(df['Content'].tolist())
 
